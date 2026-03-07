@@ -50,13 +50,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF']);
             $resetLink = $baseUrl . "/reset_password.php?token=" . $token;
             
-            $subject = "Password Reset Request - NLB Portal";
-            $message = "Hello " . $user['full_name'] . ",\n\n";
-            $message .= "We received a request to reset your password for the NLB Seller Map Portal.\n";
-            $message .= "Click the link below to set a new password. This link will expire in 1 hour.\n\n";
-            $message .= $resetLink . "\n\n";
-            $message .= "If you did not request this, please ignore this email.\n\n";
-            $message .= "Best Regards,\nNLB Administration Team";
+            $subject = "Password Reset Request - NLB Map Portal";
+            
+            // Professional HTML Email Template
+            $message = '
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+                    .email-wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+                    .header { background: linear-gradient(135deg, #0072ff, #00d4ff); padding: 20px; text-align: center; color: #ffffff; }
+                    .header h1 { margin: 0; font-size: 24px; font-weight: bold; }
+                    .content { padding: 30px; color: #333333; line-height: 1.6; }
+                    .content h2 { color: #333333; font-size: 20px; margin-top: 0; }
+                    .btn-container { text-align: center; margin: 30px 0; }
+                    .btn { display: inline-block; padding: 12px 25px; background-color: #0072ff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; }
+                    .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777777; font-size: 12px; border-top: 1px solid #eeeeee; }
+                </style>
+            </head>
+            <body>
+                <div class="email-wrapper">
+                    <div class="header">
+                        <h1>NLB Portal Security</h1>
+                    </div>
+                    <div class="content">
+                        <h2>Password Reset Request</h2>
+                        <p>Hello <strong>' . htmlspecialchars($user['full_name']) . '</strong>,</p>
+                        <p>We received a request to reset your password for the NLB Seller Map Portal. If you made this request, please click the button below to set a new password. This link is valid for <strong>1 hour</strong>.</p>
+                        <div class="btn-container">
+                            <a href="' . $resetLink . '" class="btn">Reset Password</a>
+                        </div>
+                        <p>If the button doesn\'t work, copy and paste the following link into your browser:</p>
+                        <p style="word-break: break-all; font-size: 14px; color: #0072ff;"><a href="' . $resetLink . '">' . $resetLink . '</a></p>
+                        <p>If you did not request a password reset, you can safely ignore this email. Your account remains secure.</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message from the National Lotteries Board Information Technology Division. Please do not reply to this email.</p>
+                        <p>&copy; ' . date('Y') . ' National Lotteries Board. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ';
             
             if (send_notification_email($email, $user['full_name'], $subject, $message)) {
                 $success = "Email sent! Please check your inbox for the reset link.";

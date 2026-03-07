@@ -9,6 +9,6 @@ return [
     'port'       => 587,                      // TCP port to connect to (587 for TLS, 465 for SSL)
     'encryption' => 'tls',                    // 'tls' or 'ssl'
     'from_email' => 'kamoshnlb@gmail.com',       // Displayed sender email
-    'from_name'  => 'NLB Administration'      // Displayed sender name
+    'from_name'  => 'NLB IT'      // Displayed sender name
 ];
 ?>

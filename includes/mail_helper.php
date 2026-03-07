@@ -39,7 +39,7 @@ function send_notification_email($to_email, $to_name, $subject, $body_content) {
         $mail->addAddress($to_email, $to_name);
 
         // Content
-        $mail->isHTML(false); // Plain text
+        $mail->isHTML(true); // Set email format to HTML
         $mail->Subject = $subject;
         $mail->Body    = $body_content;
 

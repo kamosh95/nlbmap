@@ -106,11 +106,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
             $to_email = $user_to_update['email'];
             $to_name = $user_to_update['full_name'] ?: $user_to_update['username'];
             $subject = "NLB Portal Account Approved! 🎉";
-            $email_body = "Hello $to_name,\n\n" .
-                    "Great news! Your account on the NLB Seller Map Portal has been approved by the administrator.\n\n" .
-                    "You can now login using your username: " . $user_to_update['username'] . "\n" .
-                    "Login URL: http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/login.php\n\n" .
-                    "Welcome aboard!\nNLB Administration";
+            $login_url = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/login.php";
+            
+            // Professional HTML Email Template
+            $email_body = '
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+                    .email-wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+                    .header { background: linear-gradient(135deg, #10b981, #34d399); padding: 20px; text-align: center; color: #ffffff; }
+                    .header h1 { margin: 0; font-size: 24px; font-weight: bold; }
+                    .content { padding: 30px; color: #333333; line-height: 1.6; }
+                    .content h2 { font-size: 20px; margin-top: 0; color: #10b981; }
+                    .user-details { background-color: #f8fafc; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                    .btn-container { text-align: center; margin: 30px 0; }
+                    .btn { display: inline-block; padding: 12px 30px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16,185,129,0.3); }
+                    .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777777; font-size: 12px; border-top: 1px solid #eeeeee; }
+                </style>
+            </head>
+            <body>
+                <div class="email-wrapper">
+                    <div class="header">
+                        <h1>NLB Portal Access</h1>
+                    </div>
+                    <div class="content">
+                        <h2>Account Approved! 🎉</h2>
+                        <p>Hello <strong>' . htmlspecialchars($to_name) . '</strong>,</p>
+                        <p>Great news! Your account on the NLB Seller Map Portal has been reviewed and <strong>approved</strong> by the administrator. You now have full access to the portal.</p>
+                        
+                        <div class="user-details">
+                            <p style="margin: 0 0 5px 0;"><strong>Your Login Credentials:</strong></p>
+                            <p style="margin: 0; font-family: monospace; font-size: 16px;">Username: <strong>' . htmlspecialchars($user_to_update['username']) . '</strong></p>
+                        </div>
+
+                        <div class="btn-container">
+                            <a href="' . $login_url . '" class="btn">Login to Portal</a>
+                        </div>
+                        
+                        <p style="font-size: 14px;">Welcome aboard! If you have any questions or need assistance, please contact the IT Helpdesk.</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message from the National Lotteries Board Information Technology Division.</p>
+                        <p>&copy; ' . date('Y') . ' National Lotteries Board. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ';
 
             if (send_notification_email($to_email, $to_name, $subject, $email_body)) {
                 $message .= " Notification email sent to $to_email.";
