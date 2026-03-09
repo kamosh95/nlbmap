@@ -9,6 +9,14 @@ $record = $stmt->fetch();
 if (!$record) {
     die("Seller record not found.");
 }
+
+// Fetch active prize announcements for this seller's agent
+$prize = null;
+try {
+    $ps = $pdo->prepare("SELECT * FROM prize_announcements WHERE agent_code = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
+    $ps->execute([$record['agent_code']]);
+    $prize = $ps->fetch();
+} catch (Exception $e) { /* table may not exist */ }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -159,6 +167,31 @@ if (!$record) {
                     <img src="<?php echo $record['image_inside']; ?>" class="gallery-img" onclick="openLightbox(this.src)" title="Inside View">
                 <?php endif; ?>
             </div>
+
+            <?php if ($prize): ?>
+            <!-- 🏆 Prize Announcement Section -->
+            <div style="margin: 0 2rem 2rem; padding: 1.75rem; background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(234,179,8,0.06)); border: 1px solid rgba(251,191,36,0.4); border-radius: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(251,191,36,0.6));">🏆</div>
+                    <div>
+                        <div style="font-size: 1.15rem; font-weight: 800; color: #fbbf24;"><?php echo htmlspecialchars($prize['title']); ?></div>
+                        <?php if ($prize['description']): ?>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;"><?php echo htmlspecialchars($prize['description']); ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <?php for ($pi = 1; $pi <= 4; $pi++): $pphoto = $prize["photo_$pi"]; ?>
+                        <?php if ($pphoto): ?>
+                            <img src="<?php echo htmlspecialchars($pphoto); ?>"
+                                 onclick="openLightbox(this.src)"
+                                 style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 2px solid rgba(251,191,36,0.4); cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);"
+                                 onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="edit-notice">
                 🔒 Authorized staff can edit these details by logging into the portal and scanning this QR.

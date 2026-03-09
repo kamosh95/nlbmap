@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'moderator' && $_SESSION['role'] !== 'user')) {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'moderator', 'tm', 'mkt', 'user'])) {
     header("Location: login.php");
     exit;
 }
@@ -136,7 +136,7 @@ foreach ($stmt->fetchAll() as $row) {
     <script>
         (function() {
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme === "dark") {
+            if (savedTheme === "dark" || !savedTheme) {
                 document.documentElement.classList.add("dark-mode");
                 document.body.classList.add("dark-mode");
             }

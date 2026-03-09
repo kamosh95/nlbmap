@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         (function() {
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme === "dark") {
+            if (savedTheme === "dark" || !savedTheme) {
                 document.documentElement.classList.add("dark-mode");
             }
         })();
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="forgot_password.php" style="color: var(--text-muted); text-decoration: none; font-size: 0.82rem; font-weight: 500; transition: 0.3s; opacity: 0.8;" onmouseover="this.style.color='var(--secondary-color)'; this.style.opacity='1'" onmouseout="this.style.color='var(--text-muted)'; this.style.opacity='0.8'">Forgot Password?</a>
             </div>
             
-            <div style="text-align: center; margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.5rem;">
+            <div style="text-align: center; margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
                 <p style="color: var(--text-muted); font-size: 0.9rem;">
                     Don't have an account? 
                     <a href="signup.php" style="color: var(--secondary-color); text-decoration: none; font-weight: 700; border-bottom: 2px solid transparent; transition: 0.3s;" onmouseover="this.style.borderColor='var(--secondary-color)'" onmouseout="this.style.borderColor='transparent'">

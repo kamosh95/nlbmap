@@ -68,7 +68,7 @@ $err = $_GET['err'] ?? '';
             padding: 0 0.5rem;
             white-space: nowrap;
         }
-        .dealer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .dealer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.5rem; }
         .dealer-card { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1.5rem; transition: 0.3s; }
         .dealer-card:hover { transform: translateY(-4px); box-shadow: 0 12px 35px rgba(0,0,0,0.3); }
         .dealer-card.hidden { display: none; }
@@ -170,9 +170,10 @@ $err = $_GET['err'] ?? '';
                         <?php endif; ?>
                     </div>
 
-                    <div style="margin-top: 1.5rem; display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                        <a href="edit_dealer.php?id=<?php echo $d['id']; ?>" style="flex:1; text-align:center; text-decoration:none; background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.2); padding:8px; border-radius:10px; font-size:0.85rem; font-weight:500;">✏️ Edit</a>
-                        <form method="POST" action="ajax/delete_entity.php" style="flex:1;" onsubmit="return confirm('Delete this dealer permanently?')">
+                    <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <a href="view_agents.php?dealer=<?php echo urlencode($d['dealer_code']); ?>" style="flex:1; min-width: 80px; text-align:center; text-decoration:none; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); padding:8px; border-radius:10px; font-size:0.85rem; font-weight:500;">👥 Agents</a>
+                        <a href="edit_dealer.php?id=<?php echo $d['id']; ?>" style="flex:1; min-width: 80px; text-align:center; text-decoration:none; background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.2); padding:8px; border-radius:10px; font-size:0.85rem; font-weight:500;">✏️ Edit</a>
+                        <form method="POST" action="ajax/delete_entity.php" style="flex:1; min-width: 80px;" onsubmit="return confirm('Delete this dealer permanently?')">
                             <?php csrf_input(); ?>
                             <input type="hidden" name="id" value="<?php echo $d['id']; ?>">
                             <input type="hidden" name="type" value="dealer">

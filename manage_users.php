@@ -320,6 +320,7 @@ $users = $stmt->fetchAll();
                         <label>Access Role</label>
                         <select name="new_role" id="new_role" onchange="toggleDistrictField()" style="width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--glass-border); color: var(--text-main); border-radius: 12px; outline: none;">
                             <option value="tm">👤 Field Operator (TM)</option>
+                            <option value="mkt">🌟 Marketing (MKT)</option>
                             <option value="user">👀 Viewer (User)</option>
                             <option value="moderator">🛡️ System Moderator</option>
                             <option value="admin">⚔️ System Administrator</option>

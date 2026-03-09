@@ -48,7 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $birthday = $_POST['birthday'] ?? '';
     $province = $_POST['province_text'] ?? $_POST['province'] ?? '';
     $district = $_POST['district_text'] ?? $_POST['district'] ?? '';
+    $ds_division = $_POST['ds_division_text'] ?? $_POST['ds_division'] ?? '';
     $phone = $_POST['phone'] ?? '';
+    $remarks = $_POST['remarks'] ?? '';
     
     $photo_path = $agent['photo'];
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
@@ -68,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        $upd = $pdo->prepare("UPDATE agents SET dealer_code=?, agent_code=?, name=?, nic_old=?, nic_new=?, birthday=?, province=?, district=?, phone=?, photo=? WHERE id=?");
-        $upd->execute([$dealer_code, $agent_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $phone, $photo_path, $id]);
+        $upd = $pdo->prepare("UPDATE agents SET dealer_code=?, agent_code=?, name=?, nic_old=?, nic_new=?, birthday=?, province=?, district=?, ds_division=?, phone=?, photo=?, remarks=? WHERE id=?");
+        $upd->execute([$dealer_code, $agent_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $ds_division, $phone, $photo_path, $remarks, $id]);
         
         // Refresh addresses
         $pdo->prepare("DELETE FROM agent_addresses WHERE agent_id=?")->execute([$id]);
@@ -137,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="form-group">
                         <label>Agent Code *</label>
                         <input type="text" name="agent_code" value="<?php echo e($agent['agent_code']); ?>" required>
@@ -144,6 +147,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-group">
                         <label>Full Name *</label>
                         <input type="text" name="name" value="<?php echo e($agent['name']); ?>" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label>Birthday</label>
+                        <input type="date" name="birthday" value="<?php echo e($agent['birthday']); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" name="phone" value="<?php echo e($agent['phone']); ?>">
                     </div>
                 </div>
 
@@ -158,26 +172,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                    <input type="hidden" name="province_text" id="province_text">
-                    <input type="hidden" name="district_text" id="district_text">
-                    <div class="form-group">
-                        <label>Province (Selected: <?php echo e($agent['province']); ?>)</label>
-                        <select id="province" name="province" onchange="loadDistricts()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                            <option value="">-- Select to Change --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>District (Selected: <?php echo e($agent['district']); ?>)</label>
-                        <select id="district" name="district" disabled style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                            <option value="">-- Select to Change --</option>
-                        </select>
+                <div style="background: rgba(0,212,255,0.03); padding: 1.5rem; border-radius: 18px; border: 1px solid rgba(0,212,255,0.1); margin-bottom: 2rem;">
+                    <label style="color: #00d4ff; display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 1.5rem;">📍 Location Details</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="hidden" name="province_text" id="province_text" value="<?php echo e($agent['province']); ?>">
+                        <input type="hidden" name="district_text" id="district_text" value="<?php echo e($agent['district']); ?>">
+                        <input type="hidden" name="ds_division_text" id="ds_division_text" value="<?php echo e($agent['ds_division']); ?>">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; color: var(--text-muted);">Province (Selected: <?php echo e($agent['province']); ?>)</label>
+                            <select id="province" name="province" onchange="loadDistricts()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                <option value="">-- Select to Change --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; color: var(--text-muted);">District (Selected: <?php echo e($agent['district']); ?>)</label>
+                            <select id="district" name="district" disabled onchange="loadDSDivisions()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                <option value="">-- Select to Change --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; color: var(--text-muted);">DS Division (Selected: <?php echo e($agent['ds_division']); ?>)</label>
+                            <select id="ds_division" name="ds_division" disabled style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                <option value="">-- Select to Change --</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Phone</label>
-                    <input type="tel" name="phone" value="<?php echo e($agent['phone']); ?>">
+                    <label>📝 Remarks / Comments</label>
+                    <textarea name="remarks" id="remarks" placeholder="Enter any additional remarks here..."><?php echo e($agent['remarks']); ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>📷 Agent Photo</label>
+                    <?php if($agent['photo']): ?>
+                        <div style="margin-bottom: 10px;">
+                            <img src="<?php echo e($agent['photo']); ?>" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid var(--secondary-color);">
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Current Photo</p>
+                        </div>
+                    <?php endif; ?>
+                    <input type="file" name="photo" id="photo" accept="image/*" onchange="previewFile()">
+                    <div id="photo_preview_wrap" style="display:none; margin-top: 10px;">
+                        <img id="photo_preview" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid #4ade80;">
+                        <p style="font-size: 0.75rem; color: #4ade80;">New Photo Preview</p>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -228,12 +267,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function loadDistricts() {
             const provIndex = document.getElementById('province').value;
             const distSelect = document.getElementById('district');
+            const dsSelect = document.getElementById('ds_division');
             distSelect.innerHTML = '<option value="">-- Select District --</option>';
+            dsSelect.innerHTML = '<option value="">-- Select DS Division --</option>';
+            dsSelect.disabled = true;
             if (provIndex === "") { distSelect.disabled = true; return; }
             locationData[provIndex].districts.forEach((d, index) => {
                 distSelect.innerHTML += `<option value="${index}">${d.district}</option>`;
             });
             distSelect.disabled = false;
+        }
+
+        function loadDSDivisions() {
+            const provIndex = document.getElementById('province').value;
+            const distIndex = document.getElementById('district').value;
+            const dsSelect = document.getElementById('ds_division');
+            dsSelect.innerHTML = '<option value="">-- Select DS Division --</option>';
+            if (distIndex === "") { dsSelect.disabled = true; return; }
+            locationData[provIndex].districts[distIndex].ds_divisions.forEach(ds => {
+                dsSelect.innerHTML += `<option value="${ds.ds_division}">${ds.ds_division}</option>`;
+            });
+            dsSelect.disabled = false;
+        }
+
+        function previewFile() {
+            const preview = document.getElementById('photo_preview');
+            const wrap = document.getElementById('photo_preview_wrap');
+            const file = document.getElementById('photo').files[0];
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                preview.src = reader.result;
+                wrap.style.display = 'block';
+            }
+            if (file) reader.readAsDataURL(file);
+            else { preview.src = ""; wrap.style.display = 'none'; }
         }
 
         function addAddress() {
@@ -253,8 +320,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('agentForm').addEventListener('submit', function() {
             const provSelect = document.getElementById('province');
             const distSelect = document.getElementById('district');
+            const dsSelect = document.getElementById('ds_division');
             if(provSelect.value !== "") document.getElementById('province_text').value = provSelect.options[provSelect.selectedIndex].text;
             if(distSelect.value !== "") document.getElementById('district_text').value = distSelect.options[distSelect.selectedIndex].text;
+            if(dsSelect.value !== "") document.getElementById('ds_division_text').value = dsSelect.options[dsSelect.selectedIndex].text;
         });
     </script>
     <?php include 'includes/footer.php'; ?>

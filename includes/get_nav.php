@@ -7,6 +7,8 @@ function get_navigation_links($pdo, $user_role) {
         $sql .= "OR role_access IN ('admin', 'moderator', 'user', 'tm')";
     } elseif ($user_role === 'moderator') {
         $sql .= "OR role_access IN ('moderator', 'user')";
+    } elseif ($user_role === 'mkt') {
+        $sql .= "OR role_access IN ('moderator')";
     } elseif ($user_role === 'tm') {
         $sql .= "OR role_access = 'tm'";
     } elseif ($user_role === 'user') {
@@ -104,7 +106,7 @@ function render_nav($pdo, $current_role) {
             
             // Check for saved theme preference
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme === "dark") {
+            if (savedTheme === "dark" || !savedTheme) {
                 body.classList.add("dark-mode");
                 themeToggle.innerHTML = "🌙";
             } else {

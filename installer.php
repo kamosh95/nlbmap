@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `mobile_no` varchar(20) DEFAULT NULL,
                     `email` varchar(100) DEFAULT NULL,
                     `password` varchar(255) NOT NULL,
-                    `role` enum('admin', 'moderator', 'tm', 'user') DEFAULT 'tm',
+                    `role` enum('admin', 'moderator', 'mkt', 'tm', 'user') DEFAULT 'tm',
                     `status` enum('pending', 'active', 'suspended') DEFAULT 'pending',
                     `assigned_districts` text DEFAULT NULL,
                     `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `id` int(11) NOT NULL AUTO_INCREMENT,
                     `label` varchar(100) NOT NULL,
                     `url` varchar(255) NOT NULL,
-                    `role_access` enum('all', 'admin', 'moderator', 'tm', 'user') DEFAULT 'all',
+                    `role_access` enum('all', 'admin', 'moderator', 'mkt', 'tm', 'user') DEFAULT 'all',
                     `nav_group` varchar(100) DEFAULT 'Main',
                     `sort_order` int(11) DEFAULT 0,
                     PRIMARY KEY (`id`)
@@ -253,11 +253,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SELECT 'Form Field Manager 🛠️',           'admin_fields.php',          'admin',           'Main',             12              UNION ALL
                         SELECT 'Import CSV Data 📤',              'import_csv.php',            'admin',           'Main',             13              UNION ALL
                         SELECT 'Contact Us 📞',                  'contact_us.php',            'all',             'Main',             30              UNION ALL
-                        SELECT 'Activity Log 📜',                'activity_log.php',          'admin',           'Main',             40
+                        SELECT 'Activity Log 📜',                'activity_log.php',          'admin',           'Main',             40              UNION ALL
+                        SELECT 'Prize Announcements 🏆',         'prize_announcements.php',   'moderator',       'Main',             50
                     ) AS tmp
                     WHERE NOT EXISTS (SELECT 1 FROM `navigation` LIMIT 1);");
 
-                // 10. Create uploads directory
+                // 10. Prize Announcements table
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS `prize_announcements` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_code` varchar(50) NOT NULL, `title` varchar(255) DEFAULT 'Big Prize Winner!', `description` text DEFAULT NULL, `photo_1` varchar(255) DEFAULT NULL, `photo_2` varchar(255) DEFAULT NULL, `photo_3` varchar(255) DEFAULT NULL, `photo_4` varchar(255) DEFAULT NULL, `is_active` tinyint(1) DEFAULT 1, `created_by` varchar(50) DEFAULT NULL, `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+                } catch (Exception $e) {}
+
+                // 11. Migration: alter role enums to add 'mkt' (for existing databases)
+                try {
+                    $pdo->exec("ALTER TABLE `users` MODIFY `role` enum('admin','moderator','mkt','tm','user') DEFAULT 'tm';");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `navigation` MODIFY `role_access` enum('all','admin','moderator','mkt','tm','user') DEFAULT 'all';");
+                } catch (Exception $e) {}
+
+                // 12. Create uploads directory
                 $uploads_dir = __DIR__ . '/uploads';
                 if (!is_dir($uploads_dir)) {
                     mkdir($uploads_dir, 0755, true);
@@ -267,6 +281,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "    Require all denied\n" .
                         "</FilesMatch>\n"
                     );
+                }
+
+                // Create uploads/prizes sub-directory
+                $prizes_dir = __DIR__ . '/uploads/prizes';
+                if (!is_dir($prizes_dir)) {
+                    mkdir($prizes_dir, 0755, true);
                 }
 
                 header("Location: installer.php?step=2");
@@ -326,7 +346,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         (function() {
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme === "dark") {
+            if (savedTheme === "dark" || !savedTheme) {
                 document.documentElement.classList.add("dark-mode");
             }
         })();

@@ -1,5 +1,5 @@
 -- NLB Seller Map Portal Database Schema
--- Updated: 2026-03-09
+-- Updated: 2026-03-09 (Added MKT role, prize_announcements table)
 -- This file contains the complete updated schema for the system.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `mobile_no` varchar(20) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin','moderator','tm','user') DEFAULT 'tm',
+  `role` enum('admin','moderator','mkt','tm','user') DEFAULT 'tm',
   `status` enum('pending','active','suspended') DEFAULT 'pending',
   `assigned_districts` text DEFAULT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `navigation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `label` varchar(100) NOT NULL,
   `url` varchar(255) NOT NULL,
-  `role_access` enum('all','admin','moderator','tm','user') DEFAULT 'all',
+  `role_access` enum('all','admin','moderator','mkt','tm','user') DEFAULT 'all',
   `nav_group` varchar(100) DEFAULT 'Main',
   `sort_order` int(11) DEFAULT 0,
   PRIMARY KEY (`id`)
@@ -170,7 +170,8 @@ INSERT INTO `navigation` (`label`, `url`, `role_access`, `nav_group`, `sort_orde
 ('Form Field Manager 🛠️', 'admin_fields.php', 'admin', 'Main', 12),
 ('Import CSV Data 📤', 'import_csv.php', 'admin', 'Main', 13),
 ('Contact Us 📞', 'contact_us.php', 'all', 'Main', 30),
-('Activity Log 📜', 'activity_log.php', 'admin', 'Main', 40);
+('Activity Log 📜', 'activity_log.php', 'admin', 'Main', 40),
+('Prize Announcements 🏆', 'prize_announcements.php', 'moderator', 'Main', 50);
 
 -- 10. Table structure for table `custom_fields`
 CREATE TABLE IF NOT EXISTS `custom_fields` (
@@ -249,6 +250,22 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
   PRIMARY KEY (`id`),
   INDEX (`email`),
   INDEX (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 16. Table structure for table `prize_announcements`
+CREATE TABLE IF NOT EXISTS `prize_announcements` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `agent_code` varchar(50) NOT NULL,
+  `title` varchar(255) DEFAULT 'Big Prize Winner!',
+  `description` text DEFAULT NULL,
+  `photo_1` varchar(255) DEFAULT NULL,
+  `photo_2` varchar(255) DEFAULT NULL,
+  `photo_3` varchar(255) DEFAULT NULL,
+  `photo_4` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 COMMIT;

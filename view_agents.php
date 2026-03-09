@@ -9,11 +9,13 @@ require_once 'includes/get_nav.php';
 
 $prov_filter = $_GET['province'] ?? '';
 $dist_filter = $_GET['district'] ?? '';
+$dealer_filter = $_GET['dealer'] ?? '';
 
 $where = "1=1";
 $params = [];
 if($prov_filter) { $where .= " AND a.province = ?"; $params[] = $prov_filter; }
 if($dist_filter) { $where .= " AND a.district = ?"; $params[] = $dist_filter; }
+if($dealer_filter) { $where .= " AND a.dealer_code = ?"; $params[] = $dealer_filter; }
 
 $stmt = $pdo->prepare("SELECT a.*, d.name as dealer_name FROM agents a LEFT JOIN dealers d ON a.dealer_code = d.dealer_code WHERE $where ORDER BY a.agent_code ASC");
 $stmt->execute($params);
@@ -26,6 +28,8 @@ if($prov_filter) {
     $d_stmt->execute([$prov_filter]);
     $districts = $d_stmt->fetchAll(PDO::FETCH_COLUMN);
 }
+
+$all_dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
 $export_url = "ajax/export_agents.php?" . http_build_query($_GET);
 
@@ -88,7 +92,7 @@ $err = $_GET['err'] ?? '';
             padding: 0 0.5rem;
             white-space: nowrap;
         }
-        .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+        .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.5rem; }
         .agent-card { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1.5rem; transition: 0.3s; }
         .agent-card:hover { transform: translateY(-4px); box-shadow: 0 12px 35px rgba(0,0,0,0.3); }
         .agent-card.hidden { display: none; }
@@ -160,23 +164,31 @@ $err = $_GET['err'] ?? '';
                 <a href="<?php echo $export_url; ?>" class="sort-btn" style="background: #10b981; border-color: #10b981; color: #fff; text-decoration: none;">📊 Export Report</a>
             </div>
             
-            <form method="GET" style="display: flex; gap: 1rem; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                <select name="province" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1;">
+            <form method="GET" style="display: flex; gap: 1rem; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 1rem; flex-wrap: wrap;">
+                <select name="dealer" class="filter-select" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1; min-width: 150px;">
+                    <option value="">-- All Dealers --</option>
+                    <?php foreach($all_dealers as $dlr): ?>
+                        <option value="<?php echo e($dlr['dealer_code']); ?>" <?php echo $dealer_filter === $dlr['dealer_code'] ? 'selected' : ''; ?>>
+                            <?php echo e($dlr['name']); ?> (<?php echo e($dlr['dealer_code']); ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="province" class="filter-select" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1; min-width: 150px;">
                     <option value="">-- All Provinces --</option>
                     <?php foreach($provinces as $p): ?>
                         <option value="<?php echo e($p); ?>" <?php echo $prov_filter === $p ? 'selected' : ''; ?>><?php echo e($p); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <select name="district" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1;">
+                <select name="district" class="filter-select" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1; min-width: 150px;">
                     <option value="">-- All Districts --</option>
                     <?php foreach($districts as $d): ?>
                         <option value="<?php echo e($d); ?>" <?php echo $dist_filter === $d ? 'selected' : ''; ?>><?php echo e($d); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <?php if($prov_filter || $dist_filter): ?>
-                    <a href="view_agents.php" class="btn-delete" style="text-decoration: none; padding: 0.65rem 1.1rem; border-radius: 12px; font-size: 0.85rem;">Reset Filters</a>
+                <?php if($prov_filter || $dist_filter || $dealer_filter): ?>
+                    <a href="view_agents.php" class="btn-delete" style="text-decoration: none; padding: 0.65rem 1.1rem; border-radius: 12px; font-size: 0.85rem; white-space: nowrap;">Reset Filters</a>
                 <?php endif; ?>
-                <span class="result-count" id="resultCount"><?php echo count($agents); ?> agents matched</span>
+                <span class="result-count" id="resultCount" style="white-space: nowrap;"><?php echo count($agents); ?> agents matched</span>
             </form>
         </div>
 

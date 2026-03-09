@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reset) {
     <script>
         (function() {
             const savedTheme = localStorage.getItem("theme");
-            if (savedTheme === "dark") {
+            if (savedTheme === "dark" || !savedTheme) {
                 document.documentElement.classList.add("dark-mode");
             }
         })();
@@ -122,8 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reset) {
         <?php if ($success): ?>
             <div class="message success" style="display: block; padding: 2rem; text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
-                <h3 style="color: #fff; margin-bottom: 0.5rem;">All Set!</h3>
-                <p style="color: rgba(255,255,255,0.8); line-height: 1.5;"><?php echo $success; ?></p>
+                <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">All Set!</h3>
+                <p style="color: var(--text-muted); line-height: 1.5;"><?php echo $success; ?></p>
                 <div style="margin-top: 2rem;">
                     <a href="login.php" class="btn-submit" style="display: inline-block; text-decoration: none; padding: 12px 30px;">Log In Now</a>
                 </div>

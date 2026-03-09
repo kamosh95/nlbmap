@@ -190,6 +190,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="tel" name="phone" value="<?php echo e($dealer['phone']); ?>">
                 </div>
 
+                <div class="form-group">
+                    <label>📷 Dealer Photo</label>
+                    <?php if($dealer['photo']): ?>
+                        <div style="margin-bottom: 10px;">
+                            <img src="<?php echo e($dealer['photo']); ?>" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid var(--secondary-color);">
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Current Photo</p>
+                        </div>
+                    <?php endif; ?>
+                    <input type="file" name="photo" id="photo" accept="image/*" onchange="previewFile()">
+                    <div id="photo_preview_wrap" style="display:none; margin-top: 10px;">
+                        <img id="photo_preview" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid #4ade80;">
+                        <p style="font-size: 0.75rem; color: #4ade80;">New Photo Preview</p>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn-submit">Update Dealer</button>
             </form>
         </div>
@@ -236,6 +251,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('location-container').appendChild(div);
         }
 
+        function previewFile() {
+            const preview = document.getElementById('photo_preview');
+            const wrap = document.getElementById('photo_preview_wrap');
+            const file = document.getElementById('photo').files[0];
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                preview.src = reader.result;
+                wrap.style.display = 'block';
+            }
+            if (file) reader.readAsDataURL(file);
+            else { preview.src = ""; wrap.style.display = 'none'; }
+        }
+
         document.getElementById('dealerForm').addEventListener('submit', function() {
             const provSelect = document.getElementById('province');
             const distSelect = document.getElementById('district');
@@ -246,3 +274,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+ekath 
