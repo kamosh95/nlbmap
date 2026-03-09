@@ -20,9 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nic_old = $_POST['nic_old'] ?? '';
     $nic_new = $_POST['nic_new'] ?? '';
     $birthday = $_POST['birthday'] ?? '';
-    $province = $_POST['province_text'] ?? '';
-    $district = $_POST['district_text'] ?? '';
+    $provinces = $_POST['provinces_text'] ?? '';
+    $districts = $_POST['districts_text'] ?? '';
     $phone = $_POST['phone'] ?? '';
+    $remarks = $_POST['remarks'] ?? '';
     
     $photo_path = null;
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
@@ -41,16 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare("INSERT INTO dealers (dealer_code, name, nic_old, nic_new, birthday, province, district, phone, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $phone, $photo_path]);
+        $stmt = $pdo->prepare("INSERT INTO dealers (dealer_code, name, nic_old, nic_new, birthday, province, district, phone, photo, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $provinces, $districts, $phone, $photo_path, $remarks]);
         $dealer_id = $pdo->lastInsertId();
         
         // Addresses
         if (isset($_POST['addresses']) && is_array($_POST['addresses'])) {
+            $addr_types = $_POST['address_types'] ?? [];
             $addr_stmt = $pdo->prepare("INSERT INTO dealer_addresses (dealer_id, address_type, address_text) VALUES (?, ?, ?)");
-            foreach ($_POST['addresses'] as $addr) {
+            foreach ($_POST['addresses'] as $idx => $addr) {
                 if (!empty($addr)) {
-                    $addr_stmt->execute([$dealer_id, 'Office/Home', $addr]);
+                    $type = $addr_types[$idx] ?? 'Main Office';
+                    $addr_stmt->execute([$dealer_id, $type, $addr]);
                 }
             }
         }
@@ -169,28 +172,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                        <input type="hidden" name="province_text" id="province_text">
-                        <input type="hidden" name="district_text" id="district_text">
-                        <div class="form-group">
-                            <label>Province *</label>
-                            <select name="province" id="province" required onchange="loadDistricts(); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                                <option value="">-- Select Province --</option>
-                            </select>
+                    <div class="form-group" style="background: rgba(255,165,0,0.03); padding: 1.5rem; border-radius: 18px; border: 1px solid rgba(255,165,0,0.1); margin-bottom: 2rem;">
+                        <label style="color: #ffa500; display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 1rem;">🌍 Operating Areas (Provinces & Districts)</label>
+                        <input type="hidden" name="provinces_text" id="provinces_text">
+                        <input type="hidden" name="districts_text" id="districts_text">
+                        
+                        <div id="area-container">
+                            <div class="dynamic-field-group area-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.8rem; color: var(--text-muted);">Province *</label>
+                                    <select class="province-select" required onchange="loadDistrictsForrow(this); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                        <option value="">-- Select Province --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.8rem; color: var(--text-muted);">District *</label>
+                                    <select class="district-select" required disabled onchange="updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                        <option value="">-- Select District --</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>District *</label>
-                            <select name="district" id="district" required disabled onchange="updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                                <option value="">-- Select District --</option>
-                            </select>
-                        </div>
+                        <button type="button" class="btn-add-more" onclick="addAreaRow()" style="margin-top: 5px; background: rgba(255,165,0,0.1); border-color: rgba(255,165,0,0.2); color: #ffa500;">+ Add Another District/Province</button>
                     </div>
 
                     <div class="form-group">
                         <label>Office / Home Addresses *</label>
                         <div id="address-container">
-                            <div class="dynamic-field-group">
-                                <textarea name="addresses[]" required placeholder="Enter Address 1" oninput="updatePreview()"></textarea>
+                            <div class="dynamic-field-group" style="display: flex; gap: 10px; flex-direction: column;">
+                                <div style="display: flex; gap: 10px;">
+                                    <select name="address_types[]" style="width: 140px; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                        <option value="Main Office">Main Office</option>
+                                        <option value="Sub Office">Sub Office</option>
+                                        <option value="Home">Home</option>
+                                    </select>
+                                    <textarea name="addresses[]" required placeholder="Enter Address 1" oninput="updatePreview()" style="flex: 1; min-height: 80px;"></textarea>
+                                </div>
                             </div>
                         </div>
                         <button type="button" class="btn-add-more" onclick="addAddress()">+ Add Another Address</button>
@@ -212,6 +229,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="phone-prefix"><span class="flag">🇱🇰</span><span class="phone-prefix-code">+94</span></div>
                             <input type="tel" name="phone" id="phone" required placeholder="712345678" oninput="updatePreview()">
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Remarks / Comments</label>
+                        <textarea name="remarks" id="remarks" placeholder="Enter any additional remarks here..." oninput="updatePreview()"></textarea>
                     </div>
 
                     <div class="form-group">
@@ -260,6 +282,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                             <span class="preview-label">Address:</span>
                             <span class="preview-val" id="p_address" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
+                        </div>
+                        <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                            <span class="preview-label">Remarks:</span>
+                            <span class="preview-val" id="p_remarks" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
                         </div>
                         
                         <img id="p_photo" class="preview-photo">
@@ -339,7 +365,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const container = document.getElementById('address-container');
             const div = document.createElement('div');
             div.className = 'dynamic-field-group';
-            div.innerHTML = '<textarea name="addresses[]" placeholder="Enter Another Address" oninput="updatePreview()"></textarea>';
+            div.style.marginTop = '10px';
+            div.innerHTML = `
+                <div style="display: flex; gap: 10px;">
+                    <select name="address_types[]" style="width: 140px; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                        <option value="Main Office">Main Office</option>
+                        <option value="Sub Office">Sub Office</option>
+                        <option value="Home">Home</option>
+                    </select>
+                    <textarea name="addresses[]" placeholder="Enter Another Address" oninput="updatePreview()" style="flex: 1; min-height: 80px;"></textarea>
+                </div>
+            `;
             container.appendChild(div);
             updatePreview();
         }
@@ -377,20 +413,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('p_nic').innerText = document.getElementById('nic_new_display').value || document.getElementById('nic_number').value || '-';
             document.getElementById('p_birthday').innerText = document.getElementById('birthday').value || '-';
             
-            const provSelect = document.getElementById('province');
-            const distSelect = document.getElementById('district');
-            const provText = provSelect.options[provSelect.selectedIndex]?.text || '';
-            const distText = distSelect.options[distSelect.selectedIndex]?.text || '';
-            
-            document.getElementById('p_area').innerText = (provText && provText !== '-- Select Province --') ? `${provText}, ${distText}` : '-';
+            const areaRows = Array.from(document.querySelectorAll('.area-row'));
+            const areas = areaRows.map(row => {
+                const p = row.querySelector('.province-select');
+                const d = row.querySelector('.district-select');
+                const pText = p.options[p.selectedIndex]?.text || '';
+                const dText = d.options[d.selectedIndex]?.text || '';
+                return (pText && pText !== '-- Select Province --') ? `${pText} (${dText})` : '';
+            }).filter(v => v !== '').join(' | ');
+
+            document.getElementById('p_area').innerText = areas || '-';
             
             document.getElementById('p_phone').innerText = document.getElementById('phone').value ? '+94 ' + document.getElementById('phone').value : '-';
             
-            const addrs = Array.from(document.querySelectorAll('textarea[name="addresses[]"]'))
-                .map(t => t.value.trim())
-                .filter(v => v !== '')
-                .join(' | ');
+            const addrGroups = Array.from(document.querySelectorAll('#address-container .dynamic-field-group'));
+            const addrs = addrGroups.map(group => {
+                const type = group.querySelector('select').value;
+                const text = group.querySelector('textarea').value.trim();
+                return text ? `(${type}) ${text}` : '';
+            }).filter(v => v !== '').join(' | ');
+            
             document.getElementById('p_address').innerText = addrs || '-';
+
+            document.getElementById('p_remarks').innerText = document.getElementById('remarks').value || '-';
         }
 
         function downloadPDF() {
@@ -428,24 +473,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .then(res => res.json())
                 .then(data => {
                     locationData = data;
-                    populateProvinces();
+                    document.querySelectorAll('.province-select').forEach(sel => populateProvincesForItem(sel));
                 });
         });
 
-        function populateProvinces() {
-            const provSelect = document.getElementById('province');
+        function populateProvincesForItem(provSelect) {
             provSelect.innerHTML = '<option value="">-- Select Province --</option>';
             locationData.forEach((p, index) => {
                 provSelect.innerHTML += `<option value="${index}">${p.province}</option>`;
             });
         }
 
-        function loadDistricts() {
-            const provIndex = document.getElementById('province').value;
-            const distSelect = document.getElementById('district');
+        function loadDistrictsForrow(provSelect) {
+            const row = provSelect.closest('.area-row');
+            const distSelect = row.querySelector('.district-select');
+            const provIndex = provSelect.value;
+            
             distSelect.innerHTML = '<option value="">-- Select District --</option>';
             distSelect.disabled = true;
             if (provIndex === "") return;
+            
             const districts = locationData[provIndex].districts;
             districts.forEach((d, index) => {
                 distSelect.innerHTML += `<option value="${index}">${d.district}</option>`;
@@ -453,11 +500,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             distSelect.disabled = false;
         }
 
+        function addAreaRow() {
+            const container = document.getElementById('area-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-field-group area-row';
+            div.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 10px; position: relative;';
+            div.innerHTML = `
+                <div class="form-group" style="margin-bottom: 0;">
+                    <select class="province-select" required onchange="loadDistrictsForrow(this); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                        <option value="">-- Select Province --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <select class="district-select" required disabled onchange="updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                        <option value="">-- Select District --</option>
+                    </select>
+                </div>
+                <button type="button" onclick="this.parentElement.remove(); updatePreview();" style="position: absolute; right: -25px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #ff4444; cursor: pointer; font-size: 1.2rem;">×</button>
+            `;
+            container.appendChild(div);
+            populateProvincesForItem(div.querySelector('.province-select'));
+            updatePreview();
+        }
+
+        function populateProvinces() {
+            // Deprecated - using populateProvincesForItem
+        }
+
+        function loadDistricts() {
+            // Deprecated - using loadDistrictsForrow
+        }
+
         document.getElementById('dealerForm').addEventListener('submit', function(e) {
-            const provSelect = document.getElementById('province');
-            const distSelect = document.getElementById('district');
-            document.getElementById('province_text').value = provSelect.options[provSelect.selectedIndex]?.text || '';
-            document.getElementById('district_text').value = distSelect.options[distSelect.selectedIndex]?.text || '';
+            const areaRows = Array.from(document.querySelectorAll('.area-row'));
+            
+            const provinces = areaRows.map(row => {
+                const p = row.querySelector('.province-select');
+                return p.options[p.selectedIndex]?.text || '';
+            }).filter(v => v !== '' && v !== '-- Select Province --').join(', ');
+
+            const districts = areaRows.map(row => {
+                const d = row.querySelector('.district-select');
+                return d.options[d.selectedIndex]?.text || '';
+            }).filter(v => v !== '' && v !== '-- Select District --').join(', ');
+
+            document.getElementById('provinces_text').value = provinces;
+            document.getElementById('districts_text').value = districts;
         });
 
         // Initial run

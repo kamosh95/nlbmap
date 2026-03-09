@@ -22,7 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $birthday = $_POST['birthday'] ?? '';
     $province = $_POST['province_text'] ?? '';
     $district = $_POST['district_text'] ?? '';
+    $ds_division = $_POST['ds_division_text'] ?? '';
     $phone = $_POST['phone'] ?? '';
+    $remarks = $_POST['remarks'] ?? '';
     
     $photo_path = null;
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
@@ -41,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare("INSERT INTO agents (agent_code, dealer_code, name, nic_old, nic_new, birthday, province, district, phone, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$agent_code, $dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $phone, $photo_path]);
+        $stmt = $pdo->prepare("INSERT INTO agents (agent_code, dealer_code, name, nic_old, nic_new, birthday, province, district, ds_division, phone, photo, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$agent_code, $dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $ds_division, $phone, $photo_path, $remarks]);
         $agent_id = $pdo->lastInsertId();
         
         // Addresses
@@ -184,22 +186,7 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                        <input type="hidden" name="province_text" id="province_text">
-                        <input type="hidden" name="district_text" id="district_text">
-                        <div class="form-group">
-                            <label>Province *</label>
-                            <select name="province" id="province" required onchange="loadDistricts(); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                                <option value="">-- Select Province --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>District *</label>
-                            <select name="district" id="district" required disabled onchange="updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
-                                <option value="">-- Select District --</option>
-                            </select>
-                        </div>
-                    </div>
+
 
                     <div class="form-group">
                         <label>Phone Number *</label>
@@ -219,14 +206,49 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
                         <button type="button" class="btn-add-more" onclick="addAddress()">+ Add Another Address</button>
                     </div>
 
-                    <div class="form-group">
-                        <label>Location Links (Google Maps) *</label>
-                        <div id="location-container">
-                            <div class="dynamic-field-group">
-                                <input type="text" name="locations[]" required placeholder="Enter Google Maps Link 1" oninput="updatePreview()">
+                    <div class="form-group" style="background: rgba(0,212,255,0.03); padding: 1.5rem; border-radius: 18px; border: 1px solid rgba(0,212,255,0.1); margin-bottom: 2rem;">
+                        <label style="color: #00d4ff; display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 1.5rem;">📍 Location Status</label>
+                        
+                        <!-- Province, District, DS Division Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <input type="hidden" name="province_text" id="province_text">
+                            <input type="hidden" name="district_text" id="district_text">
+                            <input type="hidden" name="ds_division_text" id="ds_division_text">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.85rem; color: var(--text-muted);">Province Name (පළාත) *</label>
+                                <select name="province" id="province" required onchange="loadDistricts(); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                    <option value="">-- Select Province --</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.85rem; color: var(--text-muted);">District Name (දිස්ත්රික්කය) *</label>
+                                <select name="district" id="district" required disabled onchange="loadDSDivisions(); updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                    <option value="">-- Select District --</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.85rem; color: var(--text-muted);">DS Division Name (ප්රාදේශීය ලේකම් කොට්ඨාසය) *</label>
+                                <select name="ds_division" id="ds_division" required disabled onchange="updatePreview()" style="width: 100%; padding: 0.75rem; background: var(--nav-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: white;">
+                                    <option value="">-- Select DS Division --</option>
+                                </select>
                             </div>
                         </div>
-                        <button type="button" class="btn-add-more" onclick="addLocation()">+ Add Another Location Link</button>
+
+                        <div id="location-container">
+                            <div class="dynamic-field-group">
+                                <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                                    <input type="text" name="locations[]" id="location_link_0" required placeholder="Enter Google Maps Link 1" oninput="updatePreview()" style="flex: 1;">
+                                    <button type="button" onclick="getLocationLink(0)" class="btn-gps" style="background: #00d4ff; color: #000; border: none; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">📍 Get GPS</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="location_status_0" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">Use current GPS location or paste map link.</p>
+                        <button type="button" class="btn-add-more" onclick="addLocation()" style="margin-top: 10px;">+ Add Another Location Link</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Remarks / Comments</label>
+                        <textarea name="remarks" id="remarks" placeholder="Enter any additional remarks here..." oninput="updatePreview()"></textarea>
                     </div>
 
                     <div class="form-group">
@@ -279,6 +301,10 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
                         <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                             <span class="preview-label">Address:</span>
                             <span class="preview-val" id="p_address" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
+                        </div>
+                        <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                            <span class="preview-label">Remarks:</span>
+                            <span class="preview-val" id="p_remarks" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
                         </div>
                         
                         <img id="p_photo" class="preview-photo">
@@ -365,11 +391,61 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
 
         function addLocation() {
             const container = document.getElementById('location-container');
+            const index = container.children.length;
             const div = document.createElement('div');
             div.className = 'dynamic-field-group';
-            div.innerHTML = '<input type="text" name="locations[]" placeholder="Enter Another Google Maps Link" oninput="updatePreview()">';
+            div.innerHTML = `
+                <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                    <input type="text" name="locations[]" id="location_link_${index}" placeholder="Enter Another Google Maps Link" oninput="updatePreview()" style="flex: 1;">
+                    <button type="button" onclick="getLocationLink(${index})" class="btn-gps" style="background: #00d4ff; color: #000; border: none; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">📍 Get GPS</button>
+                </div>
+                <p id="location_status_${index}" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">Use current GPS location or paste map link.</p>
+            `;
             container.appendChild(div);
             updatePreview();
+        }
+
+        function getLocationLink(index) {
+            const statusText = document.getElementById(`location_status_${index}`);
+            const linkInput = document.getElementById(`location_link_${index}`);
+            
+            if (!navigator.geolocation) {
+                statusText.textContent = "Geolocation is not supported by your browser.";
+                statusText.style.color = "#f87171";
+                return;
+            }
+
+            statusText.textContent = "Locating... Please allow location access.";
+            statusText.style.color = "#00d4ff";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    linkInput.value = `https://www.google.com/maps?q=${lat},${lng}`;
+                    statusText.textContent = "Location captured successfully!";
+                    statusText.style.color = "#4ade80";
+                    updatePreview();
+                },
+                (error) => {
+                    statusText.style.color = "#f87171";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            statusText.textContent = "User denied the request for Geolocation.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            statusText.textContent = "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            statusText.textContent = "The request to get user location timed out.";
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            statusText.textContent = "An unknown error occurred.";
+                            break;
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
         }
 
         function previewFile() {
@@ -402,10 +478,19 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
             
             const provSelect = document.getElementById('province');
             const distSelect = document.getElementById('district');
+            const dsSelect = document.getElementById('ds_division');
+
             const provText = provSelect.options[provSelect.selectedIndex]?.text || '';
             const distText = distSelect.options[distSelect.selectedIndex]?.text || '';
+            const dsText = dsSelect && dsSelect.selectedIndex >= 0 ? dsSelect.options[dsSelect.selectedIndex]?.text : '';
             
-            document.getElementById('p_area').innerText = (provText && provText !== '-- Select Province --') ? `${provText}, ${distText}` : '-';
+            let areaText = '';
+            if (provText && provText !== '-- Select Province --') {
+                areaText = provText;
+                if (distText && distText !== '-- Select District --') areaText += `, ${distText}`;
+                if (dsText && dsText !== '-- Select DS Division --') areaText += `, ${dsText}`;
+            }
+            document.getElementById('p_area').innerText = areaText || '-';
             
             document.getElementById('p_phone').innerText = document.getElementById('phone').value ? '+94 ' + document.getElementById('phone').value : '-';
             
@@ -414,6 +499,8 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
                 .filter(v => v !== '')
                 .join(' | ');
             document.getElementById('p_address').innerText = addrs || '-';
+
+            document.getElementById('p_remarks').innerText = document.getElementById('remarks').value || '-';
         }
 
         function downloadPDF() {
@@ -466,8 +553,16 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
         function loadDistricts() {
             const provIndex = document.getElementById('province').value;
             const distSelect = document.getElementById('district');
+            const dsSelect = document.getElementById('ds_division');
+
             distSelect.innerHTML = '<option value="">-- Select District --</option>';
             distSelect.disabled = true;
+
+            if (dsSelect) {
+                dsSelect.innerHTML = '<option value="">-- Select DS Division --</option>';
+                dsSelect.disabled = true;
+            }
+
             if (provIndex === "") return;
             const districts = locationData[provIndex].districts;
             districts.forEach((d, index) => {
@@ -476,11 +571,34 @@ $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC"
             distSelect.disabled = false;
         }
 
+        function loadDSDivisions() {
+            const provIndex = document.getElementById('province').value;
+            const distIndex = document.getElementById('district').value;
+            const dsSelect = document.getElementById('ds_division');
+
+            dsSelect.innerHTML = '<option value="">-- Select DS Division --</option>';
+            dsSelect.disabled = true;
+
+            if (provIndex === "" || distIndex === "") return;
+
+            const dsDivisions = locationData[provIndex].districts[distIndex].ds_divisions;
+            dsDivisions.forEach((ds, index) => {
+                dsSelect.innerHTML += `<option value="${index}">${ds.ds_division}</option>`;
+            });
+            dsSelect.disabled = false;
+        }
+
         document.getElementById('agentForm').addEventListener('submit', function(e) {
             const provSelect = document.getElementById('province');
             const distSelect = document.getElementById('district');
+            const dsSelect = document.getElementById('ds_division');
+            
             document.getElementById('province_text').value = provSelect.options[provSelect.selectedIndex]?.text || '';
             document.getElementById('district_text').value = distSelect.options[distSelect.selectedIndex]?.text || '';
+            
+            if (dsSelect && dsSelect.selectedIndex >= 0) {
+                document.getElementById('ds_division_text').value = dsSelect.options[dsSelect.selectedIndex]?.text || '';
+            }
         });
 
         // Initial run

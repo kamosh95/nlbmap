@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `image_inside` varchar(255) DEFAULT NULL,
                     `added_by` varchar(50) DEFAULT 'Unknown',
                     `reg_number` varchar(50) DEFAULT NULL,
+                    `remarks` text DEFAULT NULL,
                     `status` varchar(20) DEFAULT 'Active',
                     `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (`id`),
@@ -144,10 +145,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `settings` (`setting_key` VARCHAR(50) NOT NULL, `setting_value` TEXT, PRIMARY KEY (`setting_key`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("INSERT IGNORE INTO `settings` VALUES ('enable_location', '1');");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `transfer_history` (`id` int(11) NOT NULL AUTO_INCREMENT, `counter_id` int(11) NOT NULL, `old_dealer_code` varchar(50), `new_dealer_code` varchar(50), `old_agent_code` varchar(50), `new_agent_code` varchar(50), `changed_by` varchar(50), `changed_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), FOREIGN KEY (`counter_id`) REFERENCES `counters`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-                $pdo->exec("CREATE TABLE IF NOT EXISTS `dealers` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_code` varchar(50) UNIQUE NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `phone` varchar(20), `photo` varchar(255), `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+                $pdo->exec("CREATE TABLE IF NOT EXISTS `dealers` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_code` varchar(50) UNIQUE NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `phone` varchar(20), `photo` varchar(255), `remarks` text DEFAULT NULL, `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `dealer_addresses` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_id` int(11) NOT NULL, `address_type` varchar(50) DEFAULT 'Office', `address_text` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`dealer_id`) REFERENCES `dealers`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `dealer_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_id` int(11) NOT NULL, `location_link` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`dealer_id`) REFERENCES `dealers`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-                $pdo->exec("CREATE TABLE IF NOT EXISTS `agents` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_code` varchar(50) UNIQUE NOT NULL, `dealer_code` varchar(50) NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `phone` varchar(20), `photo` varchar(255), `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+                $pdo->exec("CREATE TABLE IF NOT EXISTS `agents` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_code` varchar(50) UNIQUE NOT NULL, `dealer_code` varchar(50) NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `ds_division` varchar(100), `phone` varchar(20), `photo` varchar(255), `remarks` text DEFAULT NULL, `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `agent_addresses` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_id` int(11) NOT NULL, `address_text` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `agent_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_id` int(11) NOT NULL, `location_link` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 
@@ -193,6 +194,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 try {
                     $pdo->exec("ALTER TABLE `counters` ADD COLUMN `opening_hours` VARCHAR(100) DEFAULT NULL AFTER `counter_state`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `remarks` TEXT DEFAULT NULL AFTER `reg_number`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `status` VARCHAR(20) DEFAULT 'Active' AFTER `remarks`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `address2` TEXT DEFAULT NULL AFTER `address`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `location_link` TEXT DEFAULT NULL AFTER `sales_method`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `dealers` ADD COLUMN `remarks` TEXT DEFAULT NULL AFTER `photo`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agents` ADD COLUMN `remarks` TEXT DEFAULT NULL AFTER `photo`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agents` ADD COLUMN `province` VARCHAR(100) DEFAULT NULL AFTER `birthday`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agents` ADD COLUMN `district` VARCHAR(100) DEFAULT NULL AFTER `province`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agents` ADD COLUMN `ds_division` VARCHAR(100) DEFAULT NULL AFTER `district`;");
                 } catch (Exception $e) {}
 
                 // 9. Seed Default Navigation Links

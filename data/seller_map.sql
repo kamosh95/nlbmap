@@ -1,5 +1,5 @@
 -- NLB Seller Map Portal Database Schema
--- Updated: 2026-03-06
+-- Updated: 2026-03-09
 -- This file contains the complete updated schema for the system.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS `counters` (
   `image_inside` varchar(255) DEFAULT NULL,
   `added_by` varchar(50) DEFAULT 'Unknown',
   `reg_number` varchar(50) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
   `status` varchar(20) DEFAULT 'Active',
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `dealers` (
   `district` varchar(100) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `photo` varchar(255) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -111,8 +113,10 @@ CREATE TABLE IF NOT EXISTS `agents` (
   `birthday` date DEFAULT NULL,
   `province` varchar(100) NOT NULL,
   `district` varchar(100) NOT NULL,
+  `ds_division` varchar(100) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `photo` varchar(255) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

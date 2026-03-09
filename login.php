@@ -109,14 +109,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <label for="password" style="margin: 0;">Password</label>
-                    <a href="forgot_password.php" style="color: var(--secondary-color); text-decoration: none; font-size: 0.8rem; font-weight: 600;">Forgot Password?</a>
-                </div>
+                <label for="password" style="margin-bottom: 0.5rem; display: block;">Password</label>
                 <input type="password" id="password" name="password" placeholder="Your password" required autocomplete="current-password">
             </div>
 
             <button type="submit" class="btn-submit" style="margin-top: 1rem;">Sign In</button>
+            
+            <div style="text-align: right; margin-top: 0.8rem;">
+                <a href="forgot_password.php" style="color: var(--text-muted); text-decoration: none; font-size: 0.82rem; font-weight: 500; transition: 0.3s; opacity: 0.8;" onmouseover="this.style.color='var(--secondary-color)'; this.style.opacity='1'" onmouseout="this.style.color='var(--text-muted)'; this.style.opacity='0.8'">Forgot Password?</a>
+            </div>
             
             <div style="text-align: center; margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.5rem;">
                 <p style="color: var(--text-muted); font-size: 0.9rem;">

@@ -90,7 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($valid) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, nic_type, nic_old, nic_new, counter_state, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, image_front, image_side, image_inside, added_by, address, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $is_draft = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
+            $final_status = $is_draft ? 'Incomplete' : 'Active';
+
+            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, nic_type, nic_old, nic_new, counter_state, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, image_front, image_side, image_inside, added_by, address, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $dealer_code, $agent_code, $seller_code, $seller_name,
                 $_POST['nic_type'] ?? '', $_POST['nic_old'] ?? '', $_POST['nic_new'] ?? '', 
@@ -102,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $image_paths['front'], $image_paths['side'], $image_paths['inside'],
                 $_SESSION['username'],
                 $_POST['address'] ?? '',
-                $_POST['phone'] ?? ''
+                $_POST['phone'] ?? '',
+                $final_status
             ]);
             $new_counter_id = $pdo->lastInsertId();
             
@@ -809,6 +813,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                     <textarea id="address" name="address" required placeholder="Enter Full Address" oninput="updatePreview()"></textarea>
                 </div>
 
+
+
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label for="phone">📞 Telephone No (දුරකථන අංකය)</label>
                     <div class="phone-input-wrap">
@@ -860,13 +866,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                     </div>
                 </div>
 
-                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                    <button type="submit" class="btn-submit" style="flex: 2;">
-                        🚀 Submit Counter Details
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>📝 Remarks / Comments</label>
+                    <textarea name="remarks" id="remarks" placeholder="Enter any additional remarks here..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <input type="hidden" name="is_draft" id="is_draft" value="0">
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn-submit" style="flex: 2;">
+                            🚀 Submit Counter Details
+                        </button>
+                        <button type="reset" class="btn-submit" style="flex: 1; background: var(--glass-border); color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="setTimeout(updatePreview, 10);">
+                            <span>🔄</span> Reset
+                        </button>
+                    </div>
+
+                    <button type="button" onclick="submitAsDraft()" class="btn-submit" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        📍 Pin Location Only (Counter Closed)
                     </button>
-                    <button type="reset" class="btn-submit" style="flex: 1; background: var(--glass-border); color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="setTimeout(updatePreview, 10);">
-                        <span>🔄</span> Reset
-                    </button>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: -5px;">Use this if the counter is closed. You can fill other details later from the dashboard.</p>
                 </div>
             </form>
         </div>
@@ -881,13 +900,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary-color);">Counter Registration</div>
                     </div>
 
-                    <div class="preview-row">
-                        <span class="preview-label">Dealer:</span>
-                        <span class="preview-val" id="prev_dealer">-</span>
+                    <div class="div-row">
+                        <span class="div-label">Dealer:</span>
+                        <span class="div-val" id="prev_dealer">-</span>
                     </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Agent:</span>
-                        <span class="preview-val" id="prev_agent">-</span>
+                    <div class="div-row">
+                        <span class="div-label">Agent:</span>
+                        <span class="div-val" id="prev_agent">-</span>
                     </div>
                     <div class="preview-row">
                         <span class="preview-label">Counter Code:</span>

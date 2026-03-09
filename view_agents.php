@@ -7,7 +7,27 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 require_once 'includes/db_config.php';
 require_once 'includes/get_nav.php';
 
-$agents = $pdo->query("SELECT a.*, d.name as dealer_name FROM agents a LEFT JOIN dealers d ON a.dealer_code = d.dealer_code ORDER BY a.agent_code ASC")->fetchAll();
+$prov_filter = $_GET['province'] ?? '';
+$dist_filter = $_GET['district'] ?? '';
+
+$where = "1=1";
+$params = [];
+if($prov_filter) { $where .= " AND a.province = ?"; $params[] = $prov_filter; }
+if($dist_filter) { $where .= " AND a.district = ?"; $params[] = $dist_filter; }
+
+$stmt = $pdo->prepare("SELECT a.*, d.name as dealer_name FROM agents a LEFT JOIN dealers d ON a.dealer_code = d.dealer_code WHERE $where ORDER BY a.agent_code ASC");
+$stmt->execute($params);
+$agents = $stmt->fetchAll();
+
+$provinces = $pdo->query("SELECT DISTINCT province FROM agents ORDER BY province")->fetchAll(PDO::FETCH_COLUMN);
+$districts = [];
+if($prov_filter) {
+    $d_stmt = $pdo->prepare("SELECT DISTINCT district FROM agents WHERE province = ? ORDER BY district");
+    $d_stmt->execute([$prov_filter]);
+    $districts = $d_stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+$export_url = "ajax/export_agents.php?" . http_build_query($_GET);
 
 $msg = $_GET['msg'] ?? '';
 $err = $_GET['err'] ?? '';
@@ -124,17 +144,40 @@ $err = $_GET['err'] ?? '';
             <div class="message error" style="display:block; margin-bottom:1rem;">❌ <?php echo e($err); ?></div>
         <?php endif; ?>
 
-        <!-- Toolbar: Search + Sort -->
-        <div class="toolbar">
-            <div class="toolbar-left">
-                <div class="search-wrap">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search by name, code, dealer, NIC, province or district...">
+        <!-- Toolbar: Search + Filters -->
+        <div class="toolbar" style="display: block;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                <div class="toolbar-left" style="flex: 2; min-width: 300px;">
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Quick search in results...">
+                    </div>
                 </div>
+                <div style="flex: 1; display: flex; gap: 0.5rem;">
+                    <button class="sort-btn active" id="sortAsc" onclick="setSort('asc')">🔼 A→Z</button>
+                    <button class="sort-btn" id="sortDesc" onclick="setSort('desc')">🔽 Z→A</button>
+                </div>
+                <a href="<?php echo $export_url; ?>" class="sort-btn" style="background: #10b981; border-color: #10b981; color: #fff; text-decoration: none;">📊 Export Report</a>
             </div>
-            <button class="sort-btn active" id="sortAsc" onclick="setSort('asc')">🔼 Code A→Z</button>
-            <button class="sort-btn" id="sortDesc" onclick="setSort('desc')">🔽 Code Z→A</button>
-            <span class="result-count" id="resultCount"><?php echo count($agents); ?> agents</span>
+            
+            <form method="GET" style="display: flex; gap: 1rem; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <select name="province" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1;">
+                    <option value="">-- All Provinces --</option>
+                    <?php foreach($provinces as $p): ?>
+                        <option value="<?php echo e($p); ?>" <?php echo $prov_filter === $p ? 'selected' : ''; ?>><?php echo e($p); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="district" onchange="this.form.submit()" style="padding: 0.65rem; background: var(--input-bg); border: 2px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif; flex: 1;">
+                    <option value="">-- All Districts --</option>
+                    <?php foreach($districts as $d): ?>
+                        <option value="<?php echo e($d); ?>" <?php echo $dist_filter === $d ? 'selected' : ''; ?>><?php echo e($d); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if($prov_filter || $dist_filter): ?>
+                    <a href="view_agents.php" class="btn-delete" style="text-decoration: none; padding: 0.65rem 1.1rem; border-radius: 12px; font-size: 0.85rem;">Reset Filters</a>
+                <?php endif; ?>
+                <span class="result-count" id="resultCount"><?php echo count($agents); ?> agents matched</span>
+            </form>
         </div>
 
         <div class="agent-grid" id="agentGrid">

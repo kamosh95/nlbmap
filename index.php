@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $counter_state= $_POST['counter_state'] ?? 'NLB';
     $board_comment= $_POST['board_comment'] ?? '';
     $location_link= $_POST['location_link'] ?? '';
+    $remarks= $_POST['remarks'] ?? '';
 
     $upload_dir  = 'uploads/';
     $image_paths = ['front' => '', 'side' => '', 'inside' => '', 'seller' => ''];
@@ -107,7 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $opening_hours = $_POST['open_h'] . ":" . $_POST['open_m'] . " - " . $_POST['close_h'] . ":" . $_POST['close_m'];
             }
 
-            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, approvals_json, image_front, image_side, image_inside, added_by, address, address2, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $is_draft = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
+            $final_status = $is_draft ? 'Incomplete' : 'Active';
+
+            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, remarks, approvals_json, image_front, image_side, image_inside, added_by, address, address2, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $dealer_code, $agent_code, $seller_code, $seller_name,
                 $_POST['nic_type'] ?? '', $_POST['nic_old'] ?? '', $_POST['nic_new'] ?? '', 
@@ -117,12 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 !empty($_POST['birthday']) ? $_POST['birthday'] : null,
                 $sales_method, $location_link,
                 $_POST['province_text'] ?? '', $_POST['district_text'] ?? '', $_POST['ds_division_text'] ?? '', (is_array($_POST['gn_division'] ?? '') ? implode(', ', $_POST['gn_division']) : ($_POST['gn_division'] ?? '')),
+                $remarks,
                 $approvals_json,
                 $image_paths['front'], $image_paths['side'], $image_paths['inside'],
                 $_SESSION['username'],
                 $_POST['address'] ?? '',
                 $_POST['address2'] ?? '',
-                $_POST['phone'] ?? ''
+                $_POST['phone'] ?? '',
+                $final_status
             ]);
             $new_counter_id = $pdo->lastInsertId();
             
@@ -224,9 +230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 nic_type=?, nic_old=?, nic_new=?,
                 counter_state=?, seller_image=?, birthday=?,
                 sales_method=?, location_link=?,
-                province=?, district=?, ds_division=?, gn_division=?,
+                province=?, district=?, ds_division=?, gn_division=?, remarks=?,
                 image_front=?, image_side=?, image_inside=?,
-                address=?
+                address=?, address2=?
                 WHERE id=? AND added_by=?");
             $upd->execute([
                 $_POST['ie_dealer_code'] ?? '', $_POST['ie_agent_code'] ?? '', $_POST['ie_seller_name'] ?? '',
@@ -236,8 +242,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 !empty($_POST['ie_birthday']) ? $_POST['ie_birthday'] : null,
                 $_POST['ie_sales_method'] ?? '', $_POST['ie_location_link'] ?? '',
                 $_POST['ie_province'] ?? '', $_POST['ie_district'] ?? '', $_POST['ie_ds_division'] ?? '', (is_array($_POST['ie_gn_division'] ?? '') ? implode(', ', $_POST['ie_gn_division']) : ($_POST['ie_gn_division'] ?? '')),
+                $_POST['ie_remarks'] ?? '',
                 $imgs['front'], $imgs['side'], $imgs['inside'],
                 $_POST['ie_address'] ?? '',
+                $_POST['ie_address2'] ?? '',
                 $edit_id, $_SESSION['username']
             ]);
 
@@ -675,6 +683,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 </div>
             </div>
 
+            <div class="form-group" style="margin-bottom: 1rem; margin-top: 1rem;">
+                <label>📝 Remarks / Comments</label>
+                <textarea name="ie_remarks" placeholder="Enter remarks here..."><?php echo htmlspecialchars($edit_record['remarks'] ?? ''); ?></textarea>
+            </div>
+
             <div style="display:flex; gap:1rem; margin-top:0.5rem;">
                 <button type="submit" style="flex:1; padding:0.9rem; background:linear-gradient(135deg,#e6b800,#cc8400); color:#000; font-weight:700; border:none; border-radius:12px; cursor:pointer; font-size:1rem; font-family:'Outfit',sans-serif;">
                     💾 Save Changes
@@ -777,7 +790,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem; margin-top: 1rem;">
-                    <label>🏢 Counter Board Type</label>
+                    <label>🏢 Counter Provide By</label>
                     <div class="radio-group" style="margin-top: 5px;">
                         <input type="radio" id="bt_nlb" name="counter_state" value="NLB" checked onchange="toggleBoardOther(); updatePreview()">
                         <label for="bt_nlb" class="radio-pill"><span>NLB</span></label>
@@ -882,6 +895,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                         <textarea id="address2" name="address2" placeholder="Enter Home Address (Optional)" oninput="updatePreview()" style="margin-top:4px;"></textarea>
                     </div>
                 </div>
+
+
 
 
 
@@ -1050,13 +1065,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                     </div>
                 </div>
 
-                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                    <button type="submit" class="btn-submit" style="flex: 2;">
-                        🚀 Submit Counter Details
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>📝 Remarks / Comments</label>
+                    <textarea name="remarks" id="remarks" placeholder="Enter any additional remarks here..." oninput="updatePreview()"></textarea>
+                </div>
+
+                <input type="hidden" name="is_draft" id="is_draft" value="0">
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn-submit" style="flex: 2;">
+                            🚀 Submit Counter Details
+                        </button>
+                        <button type="reset" class="btn-submit" style="flex: 1; background: var(--glass-border); color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="setTimeout(updatePreview, 10);">
+                            <span>🔄</span> Reset
+                        </button>
+                    </div>
+                    
+                    <button type="button" onclick="submitAsDraft()" class="btn-submit" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        📍 Pin Location Only (Counter Closed)
                     </button>
-                    <button type="reset" class="btn-submit" style="flex: 1; background: var(--glass-border); color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="setTimeout(updatePreview, 10);">
-                        <span>🔄</span> Reset
-                    </button>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: -5px;">Use this if the counter is closed. You can fill other details later from the dashboard.</p>
                 </div>
             </form>
         </div>
@@ -1080,6 +1108,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                         <span class="preview-label">Agent:</span>
                         <span class="preview-val" id="prev_agent">-</span>
                     </div>
+
+    <script>
+    function submitAsDraft() {
+        const loc = document.getElementById('location_link').value;
+        if (!loc) {
+            alert('Please capture or paste the Location Link first!');
+            return;
+        }
+        
+        if (!confirm('This will save only the location and basic info. You must complete the registration later. Continue?')) return;
+
+        // Set draft flag
+        document.getElementById('is_draft').value = '1';
+        
+        // Handle empty required fields
+        const form = document.getElementById('entryForm');
+        const nameInput = document.getElementById('seller_name');
+        if (!nameInput.value) nameInput.value = 'Draft (Location Pinned)';
+        
+        const sellerCode = document.getElementById('seller_code');
+        if (!sellerCode.value) sellerCode.value = 'DRAFT-' + Date.now();
+
+        const address = document.getElementById('address');
+        if (!address.value) address.value = 'Pinned Location - Details Pending';
+
+        // Remove required attribute temporarily from all elements
+        const requiredElements = form.querySelectorAll('[required]');
+        requiredElements.forEach(el => {
+            el.removeAttribute('required');
+        });
+
+        // Submit
+        form.submit();
+    }
+    </script>
+
 
                     <div class="preview-section-title">👤 Seller Info</div>
                     <div class="preview-row">
@@ -1157,7 +1221,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
 
                     <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Address:</span>
-                        <span class="preview-val" id="prev_address" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
+                        <span class="preview-val" id="prev_address_full" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
+                    </div>
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="preview-label">Remarks:</span>
+                        <span class="preview-val" id="prev_remarks" style="text-align: left; width: 100%; margin-top: 4px;">-</span>
                     </div>
                     <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Location Link:</span>
@@ -1332,6 +1400,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
         // Contacts & Address
         document.getElementById('prev_phone').innerText = document.getElementById('phone').value || '-';
         document.getElementById('prev_address').innerText = document.getElementById('address').value || '-';
+        document.getElementById('prev_address_full').innerText = document.getElementById('address').value || '-';
+        document.getElementById('prev_remarks').innerText = document.getElementById('remarks').value || '-';
         
         const addr2Value = document.getElementById('address2').value;
         const addr2Row = document.getElementById('prev_address2_row');
