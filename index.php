@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div style='font-size: 0.8rem; opacity: 0.7; margin-bottom: 20px;'>Scan this QR to view or update details in the future.</div>
                     <div style='display: flex; gap: 10px; justify-content: center;'>
-                        <button onclick='window.print()' class='btn-action' style='background: var(--secondary-color); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer;'>Print Receipt</button>
+                        <a href='print_receipt.php?id=$new_counter_id' target='_blank' class='btn-action' style='background: var(--secondary-color); color: #000; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; display: inline-block;'>Download Receipt</a>
                         <a href='index.php' class='btn-action' style='background: rgba(255,255,255,0.1); color: #fff; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: 600;'>Add New</a>
                     </div>
                 </div>";

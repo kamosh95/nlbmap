@@ -33,6 +33,8 @@ CREATE TABLE `agent_locations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `agent_id` int NOT NULL,
   `location_link` text NOT NULL,
+  `lat_cached` decimal(10,7) DEFAULT NULL,
+  `lng_cached` decimal(10,7) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `agent_id` (`agent_id`),
   CONSTRAINT `agent_locations_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
@@ -107,6 +109,8 @@ CREATE TABLE `counters` (
   `phone` varchar(20) DEFAULT NULL,
   `sales_method` varchar(50) DEFAULT NULL,
   `location_link` text,
+  `lat_cached` decimal(10,7) DEFAULT NULL,
+  `lng_cached` decimal(10,7) DEFAULT NULL,
   `image_front` varchar(255) DEFAULT NULL,
   `image_side` varchar(255) DEFAULT NULL,
   `image_inside` varchar(255) DEFAULT NULL,
@@ -164,6 +168,8 @@ CREATE TABLE `dealer_locations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `dealer_id` int NOT NULL,
   `location_link` text NOT NULL,
+  `lat_cached` decimal(10,7) DEFAULT NULL,
+  `lng_cached` decimal(10,7) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `dealer_id` (`dealer_id`),
   CONSTRAINT `dealer_locations_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`id`) ON DELETE CASCADE
@@ -221,10 +227,11 @@ INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sor
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('14', 'User Management 👤', 'manage_users.php', 'admin', 'Main', '10');
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('15', 'Menu Settings ⚙️', 'manage_nav.php', 'admin', 'Main', '11');
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('16', 'Form Field Manager 🛠️', 'admin_fields.php', 'admin', 'Main', '12');
-INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('17', 'Import CSV Data 📤', 'import_csv.php', 'admin', 'Main', '13');
-INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('18', 'Contact Us 📞', 'contact_us.php', 'all', 'Main', '30');
-INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('19', 'Activity Log 📜', 'activity_log.php', 'admin', 'Main', '40');
-INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('32', 'Prize Announcements 🏆', 'prize_announcements.php', 'admin', 'Main', '50');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('17', 'Bulk Image Upload 🖼️', 'bulk_image_upload.php', 'admin', 'Main', '13');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('18', 'Import CSV Data 📤', 'import_csv.php', 'admin', 'Main', '14');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('19', 'Contact Us 📞', 'contact_us.php', 'all', 'Main', '30');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('20', 'Activity Log 📜', 'activity_log.php', 'admin', 'Main', '40');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('21', 'Prize Announcements 🏆', 'prize_announcements.php', 'admin', 'Main', '50');
 
 -- Table structure for `password_resets`
 DROP TABLE IF EXISTS `password_resets`;

@@ -544,6 +544,7 @@ $print_url = "print_qrs.php?" . http_build_query($_GET);
                 </div>
                 
                 <div style="padding: 2rem; border-top: 1px solid var(--glass-border); display: flex; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.01);">
+                    <a id="modalPdfBtn" href="" target="_blank" class="btn-submit" style="flex:1; min-width: 140px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: #00d4ff;">📄 Download PDF</a>
                     <a id="modalEditBtn" href="" class="btn-submit" style="flex:1; min-width: 120px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid var(--glass-border);">✏️ Edit Record</a>
                     <?php if ($_SESSION['role'] === 'admin'): ?>
                     <form id="modalDeleteForm" action="ajax/delete_record.php" method="POST" style="flex:1; min-width: 120px; display:flex; margin:0; padding:0;" onsubmit="return confirm('Are you sure you want to delete this record? This action cannot be undone.');">
@@ -649,6 +650,7 @@ $print_url = "print_qrs.php?" . http_build_query($_GET);
                     }
 
                     document.getElementById('modalEditBtn').href = 'edit_record.php?id=' + rec.id;
+                    document.getElementById('modalPdfBtn').href = 'print_receipt.php?id=' + rec.id;
                     const deleteIdInput = document.getElementById('modalDeleteId');
                     if (deleteIdInput) {
                         deleteIdInput.value = rec.id;

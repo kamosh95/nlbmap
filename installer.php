@@ -86,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `phone` varchar(20) DEFAULT NULL,
                     `sales_method` varchar(50) DEFAULT NULL,
                     `location_link` text DEFAULT NULL,
+                    `lat_cached` DECIMAL(10,7) DEFAULT NULL,
+                    `lng_cached` DECIMAL(10,7) DEFAULT NULL,
                     `image_front` varchar(255) DEFAULT NULL,
                     `image_side` varchar(255) DEFAULT NULL,
                     `image_inside` varchar(255) DEFAULT NULL,
@@ -147,10 +149,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `transfer_history` (`id` int(11) NOT NULL AUTO_INCREMENT, `counter_id` int(11) NOT NULL, `old_dealer_code` varchar(50), `new_dealer_code` varchar(50), `old_agent_code` varchar(50), `new_agent_code` varchar(50), `changed_by` varchar(50), `changed_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), FOREIGN KEY (`counter_id`) REFERENCES `counters`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `dealers` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_code` varchar(50) UNIQUE NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `phone` varchar(20), `photo` varchar(255), `remarks` text DEFAULT NULL, `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `dealer_addresses` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_id` int(11) NOT NULL, `address_type` varchar(50) DEFAULT 'Office', `address_text` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`dealer_id`) REFERENCES `dealers`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-                $pdo->exec("CREATE TABLE IF NOT EXISTS `dealer_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_id` int(11) NOT NULL, `location_link` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`dealer_id`) REFERENCES `dealers`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+                $pdo->exec("CREATE TABLE IF NOT EXISTS `dealer_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `dealer_id` int(11) NOT NULL, `location_link` text NOT NULL, `lat_cached` DECIMAL(10,7) DEFAULT NULL, `lng_cached` DECIMAL(10,7) DEFAULT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`dealer_id`) REFERENCES `dealers`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `agents` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_code` varchar(50) UNIQUE NOT NULL, `dealer_code` varchar(50) NOT NULL, `name` varchar(100) NOT NULL, `nic_old` varchar(20), `nic_new` varchar(20), `birthday` date, `province` varchar(100), `district` varchar(100), `ds_division` varchar(100), `phone` varchar(20), `photo` varchar(255), `remarks` text DEFAULT NULL, `created_at` timestamp DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `agent_addresses` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_id` int(11) NOT NULL, `address_text` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-                $pdo->exec("CREATE TABLE IF NOT EXISTS `agent_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_id` int(11) NOT NULL, `location_link` text NOT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+                $pdo->exec("CREATE TABLE IF NOT EXISTS `agent_locations` (`id` int(11) NOT NULL AUTO_INCREMENT, `agent_id` int(11) NOT NULL, `location_link` text NOT NULL, `lat_cached` DECIMAL(10,7) DEFAULT NULL, `lng_cached` DECIMAL(10,7) DEFAULT NULL, PRIMARY KEY (`id`), FOREIGN KEY (`agent_id`) REFERENCES `agents`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
                 
                 // 6. Activity Log Table
                 $pdo->exec("CREATE TABLE IF NOT EXISTS `activity_log` (
@@ -232,6 +234,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->exec("ALTER TABLE `agents` ADD COLUMN `ds_division` VARCHAR(100) DEFAULT NULL AFTER `district`;");
                 } catch (Exception $e) {}
 
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL AFTER `location_link`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL AFTER `lat_cached`;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `dealer_locations` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `dealer_locations` ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agent_locations` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `agent_locations` ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL;");
+                } catch (Exception $e) {}
+
                 // 9. Seed Default Navigation Links
                 $pdo->exec("INSERT INTO `navigation` (label, url, role_access, nav_group, sort_order)
                     SELECT * FROM (
@@ -251,7 +277,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SELECT 'User Management 👤',              'manage_users.php',          'admin',           'Main',             10              UNION ALL
                         SELECT 'Menu Settings ⚙️',                'manage_nav.php',            'admin',           'Main',             11              UNION ALL
                         SELECT 'Form Field Manager 🛠️',           'admin_fields.php',          'admin',           'Main',             12              UNION ALL
-                        SELECT 'Import CSV Data 📤',              'import_csv.php',            'admin',           'Main',             13              UNION ALL
+                        SELECT 'Bulk Image Upload 🖼️',           'bulk_image_upload.php',     'admin',           'Main',             13              UNION ALL
+                        SELECT 'Import CSV Data 📤',              'import_csv.php',            'admin',           'Main',             14              UNION ALL
                         SELECT 'Contact Us 📞',                  'contact_us.php',            'all',             'Main',             30              UNION ALL
                         SELECT 'Activity Log 📜',                'activity_log.php',          'admin',           'Main',             40              UNION ALL
                         SELECT 'Prize Announcements 🏆',         'prize_announcements.php',   'moderator',       'Main',             50
