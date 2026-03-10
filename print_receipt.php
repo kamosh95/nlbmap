@@ -22,9 +22,21 @@ $view_url = $current_url . "/view_public.php?id=" . $id;
 $qr_api = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($view_url);
 
 // Approvals Logic
-$approvals = [];
+$approval_list = [];
 if (!empty($rec['approvals_json'])) {
-    $approvals = json_decode($rec['approvals_json'], true) ?: [];
+    $appro_data = json_decode($rec['approvals_json'], true) ?: [];
+    if (isset($appro_data['selected']) && is_array($appro_data['selected'])) {
+        foreach ($appro_data['selected'] as $app) {
+            $year = $appro_data['years'][$app] ?? '';
+            $approval_list[] = htmlspecialchars($app) . ($year ? " ($year)" : "");
+        }
+    }
+    if (!empty($appro_data['other_comment'])) {
+        $approval_list[] = "Other: " . htmlspecialchars($appro_data['other_comment']);
+    }
+    if (!empty($appro_data['no_approval_note'])) {
+        $approval_list[] = "Note: " . htmlspecialchars($appro_data['no_approval_note']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -274,8 +286,16 @@ if (!empty($rec['approvals_json'])) {
                     <span class="value"><?php echo htmlspecialchars($rec['seller_code']); ?></span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">NIC:</span>
+                    <span class="label">NIC Type:</span>
+                    <span class="value"><?php echo strtoupper($rec['nic_type'] ?? 'N/A'); ?></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">NIC Number:</span>
                     <span class="value"><?php echo htmlspecialchars($rec['nic_new'] ?: $rec['nic_old']); ?></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Birthday:</span>
+                    <span class="value"><?php echo htmlspecialchars($rec['birthday'] ?: 'N/A'); ?></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Phone:</span>
@@ -291,6 +311,13 @@ if (!empty($rec['approvals_json'])) {
                     if(!empty($rec['address2'])) echo "\n" . htmlspecialchars($rec['address2']);
                 ?></span>
             </div>
+
+            <?php if (!empty($rec['location_link'])): ?>
+            <div class="detail-row" style="grid-column: 1 / -1;">
+                <span class="label">🌐 Maps Link:</span>
+                <span class="value" style="font-size: 0.75rem; text-decoration: underline; color: #0072ff;"><?php echo htmlspecialchars($rec['location_link']); ?></span>
+            </div>
+            <?php endif; ?>
 
             <!-- ADMINISTRATIVE SECTION -->
             <div>
@@ -331,11 +358,11 @@ if (!empty($rec['approvals_json'])) {
                 <div class="detail-row">
                     <span class="label">Approvals:</span>
                     <div class="approval-badges">
-                        <?php if (empty($approvals)): ?>
+                        <?php if (empty($approval_list)): ?>
                             <span class="value">N/A</span>
                         <?php else: ?>
-                            <?php foreach($approvals as $key => $year): ?>
-                                <span class="app-badge"><?php echo htmlspecialchars($key) . ($year ? " ({$year})" : ""); ?></span>
+                            <?php foreach($approval_list as $app): ?>
+                                <span class="app-badge"><?php echo $app; ?></span>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
