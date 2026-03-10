@@ -238,13 +238,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SELECT 'Home 🏠'                  AS label, 'dashboard.php'      AS url, 'all'       AS role_access, 'Main' AS nav_group, 1 AS sort_order UNION ALL
                         SELECT 'Location (Map View) 📍',            'map_view.php',              'all',             'Main',             2               UNION ALL
                         SELECT 'Scan QR 🔍',                      'scanner.php',               'all',             'Main',             3               UNION ALL
-                        SELECT 'Dealer Entry 🏢',                   'add_dealer.php',            'admin',           'Details Entry 📝', 1               UNION ALL
-                        SELECT 'Agent Entry 👤',                    'add_agent.php',             'admin',           'Details Entry 📝', 2               UNION ALL
+                        SELECT 'Dealer Entry 🏢',                   'add_dealer.php',            'tm',              'Details Entry 📝', 1               UNION ALL
+                        SELECT 'Agent Entry 👤',                    'add_agent.php',             'tm',              'Details Entry 📝', 2               UNION ALL
                         SELECT 'Counter Seller Entry 📝',           'index.php',                 'tm',              'Details Entry 📝', 3               UNION ALL
                         SELECT 'Mobile Seller Entry 📱',           'mobile_seller.php',         'tm',              'Details Entry 📝', 4               UNION ALL
                         SELECT 'Sales Point Entry 🏪',             'sales_point.php',           'tm',              'Details Entry 📝', 5               UNION ALL
-                        SELECT 'View Dealers 📂',                 'view_dealers.php',          'admin',           'View Details 📊',  1               UNION ALL
-                        SELECT 'View Agents 📂',                  'view_agents.php',           'admin',           'View Details 📊',  2               UNION ALL
+                        SELECT 'View Dealers 📂',                 'view_dealers.php',          'tm',              'View Details 📊',  1               UNION ALL
+                        SELECT 'View Agents 📂',                  'view_agents.php',           'tm',              'View Details 📊',  2               UNION ALL
                         SELECT 'Ticket Counter View',             'dashboard.php?type=Ticket Counter', 'all',       'View Details 📊',  3               UNION ALL
                         SELECT 'Mobile Sales View',               'dashboard.php?type=Mobile Sales', 'all',         'View Details 📊',  4               UNION ALL
                         SELECT 'Sales Point View',                'dashboard.php?type=Sales Point', 'all',          'View Details 📊',  5               UNION ALL

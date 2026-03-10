@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -65,6 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
+        $check_stmt = $pdo->prepare("SELECT id FROM dealers WHERE dealer_code = ? AND id != ?");
+        $check_stmt->execute([$dealer_code, $id]);
+        if ($check_stmt->fetch()) {
+            throw new Exception("Dealer Code '{$dealer_code}' already exists for another dealer.");
+        }
+        
         $upd = $pdo->prepare("UPDATE dealers SET dealer_code=?, name=?, nic_old=?, nic_new=?, birthday=?, province=?, district=?, phone=?, photo=? WHERE id=?");
         $upd->execute([$dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $phone, $photo_path, $id]);
         
@@ -94,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_activity($pdo, "Updated Dealer", "Code: $dealer_code, Name: $name", "dealer");
         header("Location: view_dealers.php?msg=Dealer updated successfully");
         exit;
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         $pdo->rollBack();
         $message = "Error: " . $e->getMessage();
         $status = 'error';

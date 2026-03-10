@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: ../login.php");
     exit;
 }

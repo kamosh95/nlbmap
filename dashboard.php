@@ -119,8 +119,9 @@ $agent_count_stmt = $pdo->prepare("SELECT COUNT(DISTINCT agent_code) FROM counte
 $agent_count_stmt->execute($params);
 $agent_total = $agent_count_stmt->fetchColumn();
 
-// Export Link
+// Links
 $export_url = "ajax/export_sellers.php?" . http_build_query($_GET);
+$print_url = "print_qrs.php?" . http_build_query($_GET);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -338,6 +339,9 @@ $export_url = "ajax/export_sellers.php?" . http_build_query($_GET);
 
                 <div style="width: 1px; height: 20px; background: var(--glass-border); margin: 0 4px;"></div>
 
+                <a href="<?php echo $print_url; ?>" target="_blank" class="btn-submit" style="margin:0; background: #3b82f6; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0.45rem 0.7rem; font-size: 0.75rem; white-space: nowrap; height: 30px;">
+                    🖨️ Print QRs
+                </a>
                 <a href="<?php echo $export_url; ?>" class="btn-submit" style="margin:0; background: #10b981; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0.45rem 0.7rem; font-size: 0.75rem; white-space: nowrap; height: 30px;">
                     📊 Export
                 </a>

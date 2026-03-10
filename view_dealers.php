@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -124,6 +124,7 @@ $err = $_GET['err'] ?? '';
             </div>
             <button class="sort-btn active" id="sortAsc" onclick="setSort('asc')">🔼 Code A→Z</button>
             <button class="sort-btn" id="sortDesc" onclick="setSort('desc')">🔽 Code Z→A</button>
+            <a href="ajax/export_dealers.php" class="sort-btn" id="exportBtn" style="background: #10b981; border-color: #10b981; color: #fff; text-decoration: none;">📊 Export Report</a>
             <span class="result-count" id="resultCount"><?php echo count($dealers); ?> dealers</span>
         </div>
 
@@ -238,6 +239,12 @@ $err = $_GET['err'] ?? '';
             // Update count
             document.getElementById('resultCount').textContent = visible.length + ' dealer' + (visible.length !== 1 ? 's' : '');
             emptyState.style.display = visible.length === 0 ? 'block' : 'none';
+
+            // Update export link with search query
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.href = query ? 'ajax/export_dealers.php?search=' + encodeURIComponent(query) : 'ajax/export_dealers.php';
+            }
         }
 
         document.getElementById('searchInput').addEventListener('input', applyFilterAndSort);

@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -29,7 +29,7 @@ if($prov_filter) {
     $districts = $d_stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-$all_dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+$all_dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY dealer_code ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 $export_url = "ajax/export_agents.php?" . http_build_query($_GET);
 

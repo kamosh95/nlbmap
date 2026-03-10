@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -43,6 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
+        // Check if agent_code already exists
+        $check_stmt = $pdo->prepare("SELECT id FROM agents WHERE agent_code = ?");
+        $check_stmt->execute([$agent_code]);
+        if ($check_stmt->fetch()) {
+            throw new Exception("Agent Code '{$agent_code}' already exists in the system. Please use a different code or edit the existing agent.");
+        }
+        
         $stmt = $pdo->prepare("INSERT INTO agents (agent_code, dealer_code, name, nic_old, nic_new, birthday, province, district, ds_division, phone, photo, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$agent_code, $dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $ds_division, $phone, $photo_path, $remarks]);
         $agent_id = $pdo->lastInsertId();
@@ -71,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "Agent added successfully!";
         $status = 'success';
         log_activity($pdo, "Added Agent", "Code: $agent_code, Name: $name", "agent");
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         $pdo->rollBack();
         $message = "Error: " . $e->getMessage();
         $status = 'error';
@@ -79,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch dealers for dropdown
-$dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC")->fetchAll();
+$dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY dealer_code ASC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">

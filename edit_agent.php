@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -26,7 +26,7 @@ if ($id > 0) {
     $loc_stmt->execute([$id]);
     $locations = $loc_stmt->fetchAll();
     
-    $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY name ASC")->fetchAll();
+    $dealers = $pdo->query("SELECT dealer_code, name FROM dealers ORDER BY dealer_code ASC")->fetchAll();
 }
 
 if (!$agent) {
@@ -70,6 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
+        $check_stmt = $pdo->prepare("SELECT id FROM agents WHERE agent_code = ? AND id != ?");
+        $check_stmt->execute([$agent_code, $id]);
+        if ($check_stmt->fetch()) {
+            throw new Exception("Agent Code '{$agent_code}' already exists for another agent.");
+        }
+        
         $upd = $pdo->prepare("UPDATE agents SET dealer_code=?, agent_code=?, name=?, nic_old=?, nic_new=?, birthday=?, province=?, district=?, ds_division=?, phone=?, photo=?, remarks=? WHERE id=?");
         $upd->execute([$dealer_code, $agent_code, $name, $nic_old, $nic_new, $birthday ?: null, $province, $district, $ds_division, $phone, $photo_path, $remarks, $id]);
         
@@ -99,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_activity($pdo, "Updated Agent", "Code: $agent_code, Name: $name", "agent");
         header("Location: view_agents.php?msg=Agent updated successfully");
         exit;
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         $pdo->rollBack();
         $message = "Error: " . $e->getMessage();
         $status = 'error';

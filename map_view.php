@@ -7,120 +7,140 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'moderat
 
 require_once 'includes/db_config.php';
 
-// Helper to expand short URLs and get coordinates
-// Helper to expand short URLs and get coordinates
-function getCoords($url) {
-    if (empty($url)) return [null, null];
-    $lat = null; $lng = null;
-    
-    // 1. Resolve short URLs (maps.app.goo.gl / goo.gl)
+// Helper to expand short URLs (batch via curl_multi)
+function resolveShortUrl($url) {
     if (strpos($url, 'goo.gl') !== false || strpos($url, 'maps.app.goo.gl') !== false) {
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HEADER, true);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_NOBODY         => true,
+            CURLOPT_TIMEOUT        => 4,
+            CURLOPT_USERAGENT      => 'Mozilla/5.0',
+        ]);
         curl_exec($ch);
         $resolved = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
         curl_close($ch);
-        if ($resolved) $url = $resolved;
+        if ($resolved) return $resolved;
     }
+    return $url;
+}
 
+function extractCoords($url) {
+    if (empty($url)) return [null, null];
     $url = urldecode($url);
+    $lat = null; $lng = null;
 
-    // 2. High Priority: Extract Pin Location ( !3d...!4d... pattern )
-    // This is the most accurate as it points to the actual pin, not the map center.
+    // !3d...!4d... pin pattern (Google)
     if (preg_match('/!3d([0-9.-]+)!4d([0-9.-]+)/', $url, $m)) {
-        $lat = (float)$m[1];
-        $lng = (float)$m[2];
-    } 
-    // 3. Standard patterns: @lat,lng or q=lat,lng or ll=lat,lng or search/lat,lng
-    else if (preg_match('/(?:@|q=|query=|place\/|dir\/|search\/|ll=)([0-9.-]+),\s*([0-9.-]+)/', $url, $m)) {
-        $lat = (float)$m[1];
-        $lng = (float)$m[2];
+        $lat = (float)$m[1]; $lng = (float)$m[2];
     }
-    // 4. Fallback: Any comma-separated pair (for raw input like "6.9, 79.8")
-    else if (preg_match('/([0-9.-]+),\s*([0-9.-]+)/', $url, $m)) {
-        $lat = (float)$m[1];
-        $lng = (float)$m[2];
+    // Apple Maps center=lat,lng
+    elseif (preg_match('/maps\.apple\.com\/.*?center=([0-9.-]+)(?:%2C|,)([0-9.-]+)/i', $url, $m)) {
+        $lat = (float)$m[1]; $lng = (float)$m[2];
+    }
+    // @lat,lng or q=lat,lng etc.
+    elseif (preg_match('/(?:@|q=|query=|place\/|dir\/|search\/|ll=)([0-9.-]+),\s*([0-9.-]+)/', $url, $m)) {
+        $lat = (float)$m[1]; $lng = (float)$m[2];
+    }
+    // Fallback: any comma-separated pair
+    elseif (preg_match('/([0-9.-]+),\s*([0-9.-]+)/', $url, $m)) {
+        $lat = (float)$m[1]; $lng = (float)$m[2];
     }
 
-    // 5. Sri Lanka Logic: If coords are likely swapped (SL is Lat: 5-10, Lon: 79-82)
     if ($lat !== null && $lng !== null) {
-        // If Lat looks like Longitude and Longitude looks like Latitude, SWAP THEM
+        // Swap if likely reversed (SL: lat 5-10, lng 79-82)
         if (($lat > 70 && $lat < 83) && ($lng > 5 && $lng < 11)) {
-            $tmp = $lat;
-            $lat = $lng;
-            $lng = $tmp;
+            [$lat, $lng] = [$lng, $lat];
         }
-        
-        // Ignore obviously wrong coordinates (outside Sri Lanka region basically)
-        // This prevents capturing random numbers from a complex URL
-        if ($lat < 5 || $lat > 11 || $lng < 79 || $lng > 83) {
-            // Keep it but maybe it's not SL? In this portal, it SHOULD be SL.
-            // If it's totally crazy (like 123.456), we discard.
-            if ($lat > 90 || $lat < -90 || $lng > 180 || $lng < -180) {
-                return [null, null];
-            }
+        // Discard completely invalid coords
+        if ($lat > 90 || $lat < -90 || $lng > 180 || $lng < -180) {
+            return [null, null];
         }
     }
-
     return [$lat, $lng];
 }
 
+// Add lat_cached / lng_cached columns if not exist (run once, silent)
+try {
+    $pdo->exec("ALTER TABLE `agent_locations` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL, ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL");
+} catch (Exception $e) {}
+try {
+    $pdo->exec("ALTER TABLE `dealer_locations` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL, ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL");
+} catch (Exception $e) {}
+try {
+    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `lat_cached` DECIMAL(10,7) DEFAULT NULL, ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL");
+} catch (Exception $e) {}
+
 $locations = [];
 
-// 1. Fetch Sellers (Counters)
-$stmt = $pdo->query("SELECT id, seller_name, seller_code, location_link, dealer_code, agent_code, image_front, sales_method FROM counters WHERE (status = 'Active' OR status IS NULL) AND location_link IS NOT NULL AND location_link != ''");
-foreach ($stmt->fetchAll() as $row) {
-    list($lat, $lng) = getCoords($row['location_link']);
+// --- 1. Sellers (counters) ---
+$rows = $pdo->query("SELECT id, seller_name, seller_code, location_link, dealer_code, agent_code, image_front, sales_method, lat_cached, lng_cached FROM counters WHERE (status = 'Active' OR status IS NULL) AND location_link IS NOT NULL AND location_link != ''")->fetchAll();
+foreach ($rows as $row) {
+    if ($row['lat_cached'] !== null) {
+        $lat = (float)$row['lat_cached'];
+        $lng = (float)$row['lng_cached'];
+    } else {
+        $resolved = resolveShortUrl($row['location_link']);
+        [$lat, $lng] = extractCoords($resolved);
+        if ($lat !== null) {
+            $pdo->prepare("UPDATE counters SET lat_cached=?, lng_cached=? WHERE id=?")->execute([$lat, $lng, $row['id']]);
+        }
+    }
     if ($lat !== null) {
         $locations[] = [
-            'type' => 'seller',
-            'id' => $row['id'],
-            'name' => $row['seller_name'],
-            'code' => $row['seller_code'],
+            'type' => 'seller', 'id' => $row['id'],
+            'name' => $row['seller_name'], 'code' => $row['seller_code'],
             'sub_info' => "Agent: " . ($row['agent_code'] ?: 'N/A') . " | Dealer: " . $row['dealer_code'],
             'lat' => $lat, 'lng' => $lng,
-            'photo' => $row['image_front'],
-            'sales_method' => $row['sales_method']
+            'photo' => $row['image_front'], 'sales_method' => $row['sales_method']
         ];
     }
 }
 
-// 2. Fetch Dealers
-$stmt = $pdo->query("SELECT d.id, d.name, d.dealer_code, d.photo, dl.location_link 
-                     FROM dealers d JOIN dealer_locations dl ON d.id = dl.dealer_id");
-foreach ($stmt->fetchAll() as $row) {
-    list($lat, $lng) = getCoords($row['location_link']);
+// --- 2. Dealers ---
+$rows = $pdo->query("SELECT d.id, d.name, d.dealer_code, d.photo, dl.id AS loc_id, dl.location_link, dl.lat_cached, dl.lng_cached FROM dealers d JOIN dealer_locations dl ON d.id = dl.dealer_id")->fetchAll();
+foreach ($rows as $row) {
+    if ($row['lat_cached'] !== null) {
+        $lat = (float)$row['lat_cached'];
+        $lng = (float)$row['lng_cached'];
+    } else {
+        $resolved = resolveShortUrl($row['location_link']);
+        [$lat, $lng] = extractCoords($resolved);
+        if ($lat !== null) {
+            $pdo->prepare("UPDATE dealer_locations SET lat_cached=?, lng_cached=? WHERE id=?")->execute([$lat, $lng, $row['loc_id']]);
+        }
+    }
     if ($lat !== null) {
         $locations[] = [
-            'type' => 'dealer',
-            'id' => $row['id'],
-            'name' => $row['name'],
-            'code' => $row['dealer_code'],
+            'type' => 'dealer', 'id' => $row['id'],
+            'name' => $row['name'], 'code' => $row['dealer_code'],
             'sub_info' => 'Dealer Location',
-            'lat' => $lat, 'lng' => $lng,
-            'photo' => $row['photo']
+            'lat' => $lat, 'lng' => $lng, 'photo' => $row['photo']
         ];
     }
 }
 
-// 3. Fetch Agents
-$stmt = $pdo->query("SELECT a.id, a.name, a.agent_code, a.dealer_code, a.phone, a.photo, al.location_link 
-                     FROM agents a JOIN agent_locations al ON a.id = al.agent_id");
-foreach ($stmt->fetchAll() as $row) {
-    list($lat, $lng) = getCoords($row['location_link']);
+// --- 3. Agents ---
+$rows = $pdo->query("SELECT a.id, a.name, a.agent_code, a.dealer_code, a.phone, a.photo, al.id AS loc_id, al.location_link, al.lat_cached, al.lng_cached FROM agents a JOIN agent_locations al ON a.id = al.agent_id")->fetchAll();
+foreach ($rows as $row) {
+    if ($row['lat_cached'] !== null) {
+        $lat = (float)$row['lat_cached'];
+        $lng = (float)$row['lng_cached'];
+    } else {
+        $resolved = resolveShortUrl($row['location_link']);
+        [$lat, $lng] = extractCoords($resolved);
+        if ($lat !== null) {
+            $pdo->prepare("UPDATE agent_locations SET lat_cached=?, lng_cached=? WHERE id=?")->execute([$lat, $lng, $row['loc_id']]);
+        }
+    }
     if ($lat !== null) {
         $locations[] = [
-            'type' => 'agent',
-            'id' => $row['id'],
-            'name' => $row['name'],
-            'code' => $row['agent_code'],
+            'type' => 'agent', 'id' => $row['id'],
+            'name' => $row['name'], 'code' => $row['agent_code'],
             'sub_info' => "Dealer: " . $row['dealer_code'] . " | Ph: " . $row['phone'],
-            'lat' => $lat, 'lng' => $lng,
-            'photo' => $row['photo']
+            'lat' => $lat, 'lng' => $lng, 'photo' => $row['photo']
         ];
     }
 }

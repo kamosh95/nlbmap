@@ -6,26 +6,29 @@ if (!isset($_SESSION['role'])) {
     die("Access denied");
 }
 
-$prov_filter = $_GET['province'] ?? '';
-$dist_filter = $_GET['district'] ?? '';
+$search = $_GET['search'] ?? '';
 
 $where = "1=1";
 $params = [];
-if($prov_filter) { $where .= " AND a.province = ?"; $params[] = $prov_filter; }
-if($dist_filter) { $where .= " AND a.district = ?"; $params[] = $dist_filter; }
+
+if ($search) {
+    $where .= " AND (dealer_code LIKE ? OR name LIKE ? OR nic_old LIKE ? OR nic_new LIKE ? OR province LIKE ? OR district LIKE ?)";
+    $term = "%$search%";
+    $params = array_merge($params, [$term, $term, $term, $term, $term, $term]);
+}
 
 $stmt = $pdo->prepare("
-    SELECT a.*, d.name as dealer_name, 
-           (SELECT GROUP_CONCAT(location_link SEPARATOR ' | ') FROM agent_locations WHERE agent_id = a.id) as location_link
-    FROM agents a 
-    LEFT JOIN dealers d ON a.dealer_code = d.dealer_code 
+    SELECT d.*, 
+           (SELECT GROUP_CONCAT(address_text SEPARATOR ' | ') FROM dealer_addresses WHERE dealer_id = d.id) as addresses,
+           (SELECT GROUP_CONCAT(location_link SEPARATOR ' | ') FROM dealer_locations WHERE dealer_id = d.id) as location_link
+    FROM dealers d 
     WHERE $where 
-    ORDER BY a.agent_code ASC
+    ORDER BY d.dealer_code ASC
 ");
 $stmt->execute($params);
 $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$filename = "agents_report_" . date('Ymd_His') . ".csv";
+$filename = "dealers_report_" . date('Ymd_His') . ".csv";
 
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=' . $filename);

@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/security.php';
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'tm'])) {
     header("Location: login.php");
     exit;
 }
@@ -42,6 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
+        // Check if dealer_code already exists
+        $check_stmt = $pdo->prepare("SELECT id FROM dealers WHERE dealer_code = ?");
+        $check_stmt->execute([$dealer_code]);
+        if ($check_stmt->fetch()) {
+            throw new Exception("Dealer Code '{$dealer_code}' already exists in the system. Please use a different code or edit the existing dealer.");
+        }
+        
         $stmt = $pdo->prepare("INSERT INTO dealers (dealer_code, name, nic_old, nic_new, birthday, province, district, phone, photo, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$dealer_code, $name, $nic_old, $nic_new, $birthday ?: null, $provinces, $districts, $phone, $photo_path, $remarks]);
         $dealer_id = $pdo->lastInsertId();
@@ -72,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "Dealer added successfully!";
         $status = 'success';
         log_activity($pdo, "Added Dealer", "Code: $dealer_code, Name: $name", "dealer");
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         $pdo->rollBack();
         $message = "Error: " . $e->getMessage();
         $status = 'error';

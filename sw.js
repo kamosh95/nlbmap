@@ -1,16 +1,31 @@
-const CACHE_NAME = 'nlb-map-v1';
+const CACHE_NAME = 'nlb-map-v2';
 const ASSETS = [
-    'login.php',
     'assets/css/style.css',
     'assets/img/Logo.png'
 ];
 
 // Install Service Worker
 self.addEventListener('install', event => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll(ASSETS);
         })
+    );
+});
+
+// Activate Service Worker and clean up old caches
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
     );
 });
 
