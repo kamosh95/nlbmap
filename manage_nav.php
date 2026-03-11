@@ -60,8 +60,8 @@ $existing_groups = $pdo->query("SELECT DISTINCT nav_group FROM navigation WHERE 
     <style>
         .settings-grid {
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
             align-items: start;
         }
         .help-text {
@@ -145,6 +145,12 @@ $existing_groups = $pdo->query("SELECT DISTINCT nav_group FROM navigation WHERE 
             color: black;
             border-color: var(--secondary-color);
         }
+
+        /* Tighter table layout */
+        .table-wrapper table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        .table-wrapper th { padding: 0.75rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); }
+        .table-wrapper td { padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .table-wrapper tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -232,12 +238,12 @@ $existing_groups = $pdo->query("SELECT DISTINCT nav_group FROM navigation WHERE 
                 <table style="min-width: 100%;">
                     <thead>
                         <tr>
-                            <th style="width: 60px; text-align: center;">Pos</th>
+                            <th style="width: 50px; text-align: center;">Pos</th>
                             <th>Label</th>
                             <th>Target URL</th>
                             <th>Group</th>
                             <th>Visibility</th>
-                            <th style="text-align: right; padding-right: 2rem;">Actions</th>
+                            <th style="width: 100px; text-align: right; padding-right: 1rem;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,7 +256,7 @@ $existing_groups = $pdo->query("SELECT DISTINCT nav_group FROM navigation WHERE 
                                 <?php echo htmlspecialchars($link['label']); ?>
                             </td>
                             <td data-label="URL">
-                                <code style="background: rgba(0, 114, 255, 0.08); color: #60a5fa; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; border: 1px solid rgba(0, 114, 255, 0.15); font-family: 'Courier New', monospace;">
+                                <code style="background: rgba(0, 114, 255, 0.08); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(0, 114, 255, 0.15); font-family: 'Courier New', monospace; max-width: 150px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($link['url']); ?>">
                                     <?php echo htmlspecialchars($link['url']); ?>
                                 </code>
                             </td>
@@ -274,13 +280,13 @@ $existing_groups = $pdo->query("SELECT DISTINCT nav_group FROM navigation WHERE 
                                 ?>
                                 <span class="role-tag <?php echo $rc; ?>"><?php echo $rl; ?></span>
                             </td>
-                            <td data-label="Actions" style="padding-right: 1.5rem;">
-                                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                    <button onclick='editLink(<?php echo json_encode($link); ?>)' class="action-btn btn-edit-small" title="Edit Link">✏️</button>
+                            <td data-label="Actions" style="padding-right: 1rem;">
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <button onclick='editLink(<?php echo json_encode($link); ?>)' class="action-btn btn-edit-small" title="Edit" style="width:28px; height:28px;">✏️</button>
                                     <form method="POST" style="display:inline;" onsubmit="return confirm('Permanently remove this link?')">
                                         <?php csrf_input(); ?>
                                         <input type="hidden" name="delete_id" value="<?php echo $link['id']; ?>">
-                                        <button type="submit" class="action-btn btn-delete-small" title="Remove Link">🗑️</button>
+                                        <button type="submit" class="action-btn btn-delete-small" title="Delete" style="width:28px; height:28px;">🗑️</button>
                                     </form>
                                 </div>
                             </td>

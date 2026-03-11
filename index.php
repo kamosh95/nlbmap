@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $file_name = $base_name . '_' . $key . '_' . uniqid() . '.' . $extension;
             $target_path = $upload_dir . $file_name;
 
-            if (move_uploaded_file($tmp_name, $target_path)) {
+            if (compress_image($tmp_name, $target_path, 60, 1000)) {
                 $image_paths[$key] = $target_path;
             } else {
                 $valid = false;
@@ -111,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $is_draft = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
             $final_status = $is_draft ? 'Incomplete' : 'Active';
 
-            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, remarks, approvals_json, image_front, image_side, image_inside, added_by, address, address2, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, title, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, remarks, approvals_json, image_front, image_side, image_inside, added_by, address, address2, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $dealer_code, $agent_code, $seller_code, $seller_name,
+                $dealer_code, $agent_code, $seller_code, $seller_name, $_POST['title'] ?? '',
                 $_POST['nic_type'] ?? '', $_POST['nic_old'] ?? '', $_POST['nic_new'] ?? '', 
                 $_POST['joined_year'] ?? '',
                 $counter_state, $board_comment, $opening_hours,
@@ -132,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $new_counter_id = $pdo->lastInsertId();
             
-            // Generate Running Number: AgentCode-Sequence
-            $seq_stmt = $pdo->prepare("SELECT COUNT(*) FROM counters WHERE agent_code = ?");
+            // Generate Running Number: AgentCode-Sequence (Excluding Sales Points)
+            $seq_stmt = $pdo->prepare("SELECT COUNT(*) FROM counters WHERE agent_code = ? AND sales_method != 'Sales Point'");
             $seq_stmt->execute([$agent_code]);
             $count = $seq_stmt->fetchColumn();
             $reg_number = $agent_code . "-" . str_pad($count, 3, '0', STR_PAD_LEFT);
@@ -217,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 if (is_allowed_file($orig, $tmp)) {
                     $ext  = pathinfo($orig, PATHINFO_EXTENSION);
                     $fname = 'EDIT_' . preg_replace('/[^a-zA-Z0-9]/', '_', $_POST['ie_seller_code'] ?? 'X') . "_$key\_" . uniqid() . ".$ext";
-                    if (move_uploaded_file($tmp, $upload_dir . $fname)) {
+                    if (compress_image($tmp, $upload_dir . $fname, 60, 1000)) {
                         $imgs[$key] = $upload_dir . $fname;
                     }
                 }
@@ -703,7 +703,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
 
         <!-- ── Left: Form Panel ── -->
         <div class="form-panel">
-            <h2>🏪 Counter Seller Details Entry</h2>
+            <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <span>🏪 Counter Seller Details Entry</span>
+                <span id="header_seller_code" style="background: rgba(0,212,255,0.1); color: #00d4ff; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-family: monospace; border: 1px solid rgba(0,212,255,0.2); font-weight: 700;"># NO CODE</span>
+            </h2>
             <form action="" method="POST" enctype="multipart/form-data" id="entryForm">
                 <?php 
                 csrf_input(); 
@@ -812,12 +815,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 </div>
 
 
-                <div class="field-row">
-                    <div class="form-group">
-                        <label for="seller_code">Seller Code</label>
-                        <input type="text" id="seller_code" name="seller_code" placeholder="Generated from NIC" readonly style="background: rgba(255,255,255,0.02); cursor: not-allowed; border-color: rgba(255,255,255,0.05);" required oninput="updatePreview()">
+                <input type="hidden" id="seller_code" name="seller_code" required>
+
+                <div class="field-row" style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 0 0 42px; min-width: 42px;">
+                        <label for="title" style="font-size: 0.65rem;">Title</label>
+                        <select id="title" name="title" required onchange="updatePreview()" class="form-select-modern" style="padding: 0.75rem 0.2rem; font-size: 0.68rem; height: 42px;">
+                            <option value="Mr.">Mr.</option>
+                            <option value="Mrs.">Mrs.</option>
+                            <option value="Miss.">Miss.</option>
+                            <option value="Rev.">Rev.</option>
+                        </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1;">
                         <label for="seller_name">Seller Name</label>
                         <input type="text" id="seller_name" name="seller_name" placeholder="Full name" required oninput="updatePreview()">
                     </div>
@@ -1690,6 +1700,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 const newNic = year + rest + "0" + serial;
                 nicNewBox.value = newNic;
                 document.getElementById('seller_code').value = newNic;
+                document.getElementById('header_seller_code').textContent = "# " + newNic;
                 nicOldHidden.value = val;
                 
                 extractBirthday(newNic);
@@ -1702,6 +1713,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
             if (val.length === 12) {
                 nicNewBox.value = val;
                 document.getElementById('seller_code').value = val;
+                document.getElementById('header_seller_code').textContent = "# " + val;
                 nicOldHidden.value = '';
                 extractBirthday(val);
                 updatePreview();

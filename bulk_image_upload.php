@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_bulk'])) {
                 $new_filename = 'dealer_' . preg_replace('/[^a-zA-Z0-9]/', '', $code) . '_' . uniqid() . '.' . $ext;
                 $target = 'uploads/' . $new_filename;
                 
-                if (copy($full_path, $target)) {
+                if (compress_image($full_path, $target, 70, 1000)) {
                     $upd = $pdo->prepare("UPDATE dealers SET photo = ? WHERE id = ?");
                     $upd->execute([$target, $dealer['id']]);
                     $results[] = "ID: {$dealer['dealer_code']} (Dealer) - Image updated: $file";
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_bulk'])) {
                 $new_filename = 'agent_' . preg_replace('/[^a-zA-Z0-9]/', '', $code) . '_' . uniqid() . '.' . $ext;
                 $target = 'uploads/' . $new_filename;
                 
-                if (copy($full_path, $target)) {
+                if (compress_image($full_path, $target, 70, 1000)) {
                     $upd = $pdo->prepare("UPDATE agents SET photo = ? WHERE id = ?");
                     $upd->execute([$target, $agent['id']]);
                     $results[] = "ID: {$agent['agent_code']} (Agent) - Image updated: $file";

@@ -162,5 +162,74 @@ function log_activity($pdo, $action, $details = null, $type = 'general') {
     }
 }
 
+/**
+ * Image Compression/Resizing Helper
+ */
+function compress_image($source, $destination, $quality = 65, $max_width = 1200) {
+    // Determine if it is an uploaded file or local file for fallback
+    $is_uploaded = is_uploaded_file($source);
+    
+    $fallback = function($src, $dst) use ($is_uploaded) {
+        return $is_uploaded ? move_uploaded_file($src, $dst) : copy($src, $dst);
+    };
+
+    if (!function_exists('imagecreatefromjpeg')) return $fallback($source, $destination);
+
+    $info = getimagesize($source);
+    if ($info === false) return $fallback($source, $destination);
+
+    $mime = $info['mime'];
+    switch ($mime) {
+        case 'image/jpeg': $image = @imagecreatefromjpeg($source); break;
+        case 'image/gif':  $image = @imagecreatefromgif($source); break;
+        case 'image/png':  $image = @imagecreatefrompng($source); break;
+        case 'image/webp': $image = @imagecreatefromwebp($source); break;
+        default: return $fallback($source, $destination);
+    }
+
+    if (!$image) return $fallback($source, $destination);
+
+    // Get original dimensions
+    $width = imagesx($image);
+    $height = imagesy($image);
+
+    // Resize if necessary
+    if ($width > $max_width) {
+        $new_width = $max_width;
+        $new_height = floor($height * ($max_width / $width));
+        $tmp_img = imagecreatetruecolor($new_width, $new_height);
+        
+        // Preserve transparency for PNG/GIF/WEBP
+        if ($mime != 'image/jpeg') {
+            imagealphablending($tmp_img, false);
+            imagesavealpha($tmp_img, true);
+        }
+        
+        imagecopyresampled($tmp_img, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+        imagedestroy($image);
+        $image = $tmp_img;
+    }
+
+    $res = false;
+    switch ($mime) {
+        case 'image/png':
+            // PNG compression is 0-9
+            $res = imagepng($image, $destination, 7); 
+            break;
+        case 'image/webp':
+            $res = imagewebp($image, $destination, $quality);
+            break;
+        case 'image/gif':
+            $res = imagegif($image, $destination);
+            break;
+        default:
+            $res = imagejpeg($image, $destination, $quality);
+            break;
+    }
+
+    imagedestroy($image);
+    return $res;
+}
+
 // Automatically set headers if this file is included
 set_security_headers();

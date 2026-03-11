@@ -89,6 +89,7 @@ CREATE TABLE `counters` (
   `agent_code` varchar(50) DEFAULT NULL,
   `seller_code` varchar(50) DEFAULT NULL,
   `seller_name` varchar(100) DEFAULT NULL,
+  `title` varchar(20) DEFAULT NULL,
   `nic_type` varchar(10) DEFAULT NULL,
   `nic_old` varchar(20) DEFAULT NULL,
   `nic_new` varchar(20) DEFAULT NULL,

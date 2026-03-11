@@ -67,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `agent_code` varchar(50) DEFAULT NULL,
                     `seller_code` varchar(50) DEFAULT NULL,
                     `seller_name` varchar(100) DEFAULT NULL,
+                    `title` varchar(20) DEFAULT NULL,
                     `nic_type` varchar(10) DEFAULT NULL,
                     `nic_old` varchar(20) DEFAULT NULL,
                     `nic_new` varchar(20) DEFAULT NULL,
@@ -227,6 +228,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } catch (Exception $e) {}
 
                 try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `title` VARCHAR(20) DEFAULT NULL AFTER `seller_name`;");
+                } catch (Exception $e) {}
+
+                try {
                     $pdo->exec("ALTER TABLE `agents` ADD COLUMN `district` VARCHAR(100) DEFAULT NULL AFTER `province`;");
                 } catch (Exception $e) {}
 
@@ -281,7 +286,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SELECT 'Import CSV Data 📤',              'import_csv.php',            'admin',           'Main',             14              UNION ALL
                         SELECT 'Contact Us 📞',                  'contact_us.php',            'all',             'Main',             30              UNION ALL
                         SELECT 'Activity Log 📜',                'activity_log.php',          'admin',           'Main',             40              UNION ALL
-                        SELECT 'Prize Announcements 🏆',         'prize_announcements.php',   'moderator',       'Main',             50
+                        SELECT 'Prize Announcements 🏆',         'prize_announcements.php',   'moderator',       'Main',             50              UNION ALL
+                        SELECT 'Data Analysis 📊',               'analytics.php',             'tm',              'View Details 📊',  10
                     ) AS tmp
                     WHERE NOT EXISTS (SELECT 1 FROM `navigation` LIMIT 1);");
 

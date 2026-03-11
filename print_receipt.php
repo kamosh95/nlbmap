@@ -279,7 +279,7 @@ if (!empty($rec['approvals_json'])) {
                 <div class="section-title">👤 Seller Identity</div>
                 <div class="detail-row">
                     <span class="label">Full Name:</span>
-                    <span class="value"><?php echo htmlspecialchars($rec['seller_name']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars(($rec['title'] ? $rec['title'] . ' ' : '') . $rec['seller_name']); ?></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Seller Code:</span>
