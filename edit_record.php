@@ -67,10 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'seller' => $record['seller_image'],
         'front'  => $record['image_front'],
         'side'   => $record['image_side'],
-        'inside' => $record['image_inside']
+        'inside' => $record['image_inside'],
+        'rear'   => $record['image_rear'] ?? '',
     ];
 
-    foreach (['seller', 'front', 'side', 'inside'] as $key) {
+    foreach (['seller', 'front', 'side', 'inside', 'rear'] as $key) {
         $file_key = ($key === 'seller') ? 'seller_image' : 'image_' . $key;
         if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
             $tmp_name = $_FILES[$file_key]['tmp_name'];
@@ -121,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             image_front = ?,
             image_side = ?,
             image_inside = ?,
+            image_rear = ?,
             address = ?,
             phone = ?,
             status = ?
@@ -145,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $imgs['front'],
             $imgs['side'],
             $imgs['inside'],
+            $imgs['rear'],
             $_POST['address'] ?? '',
             $_POST['phone'] ?? '',
             $_POST['status'] ?? 'Active',
@@ -478,6 +481,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <img src="<?php echo $record['image_inside']; ?>" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 2px solid var(--secondary-color); flex-shrink: 0;">
                         <?php endif; ?>
                         <input type="file" name="image_inside" accept="image/*" style="font-size: 0.8rem; width: 100%;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>🔙 Counter Rear View</label>
+                    <div style="display: flex; gap: 1rem; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <?php if (isset($record['image_rear']) && $record['image_rear']): ?>
+                            <img src="<?php echo $record['image_rear']; ?>" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 2px solid var(--secondary-color); flex-shrink: 0;">
+                        <?php endif; ?>
+                        <input type="file" name="image_rear" accept="image/*" style="font-size: 0.8rem; width: 100%;">
                     </div>
                 </div>
             </div>

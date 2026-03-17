@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once 'includes/security.php';
 
 // Step handling
@@ -92,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `image_front` varchar(255) DEFAULT NULL,
                     `image_side` varchar(255) DEFAULT NULL,
                     `image_inside` varchar(255) DEFAULT NULL,
+                    `image_rear` varchar(255) DEFAULT NULL,
                     `added_by` varchar(50) DEFAULT 'Unknown',
                     `reg_number` varchar(50) DEFAULT NULL,
                     `remarks` text DEFAULT NULL,
@@ -261,6 +262,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 try {
                     $pdo->exec("ALTER TABLE `agent_locations` ADD COLUMN `lng_cached` DECIMAL(10,7) DEFAULT NULL;");
+                } catch (Exception $e) {}
+
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD COLUMN `image_rear` VARCHAR(255) DEFAULT NULL AFTER `image_inside`;");
                 } catch (Exception $e) {}
 
                 // 9. Seed Default Navigation Links

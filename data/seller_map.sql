@@ -115,6 +115,7 @@ CREATE TABLE `counters` (
   `image_front` varchar(255) DEFAULT NULL,
   `image_side` varchar(255) DEFAULT NULL,
   `image_inside` varchar(255) DEFAULT NULL,
+  `image_rear` varchar(255) DEFAULT NULL,
   `added_by` varchar(50) DEFAULT 'Unknown',
   `reg_number` varchar(50) DEFAULT NULL,
   `status` varchar(20) DEFAULT 'Active',

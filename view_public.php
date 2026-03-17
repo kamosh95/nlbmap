@@ -166,6 +166,9 @@ try {
                 <?php if ($record['image_inside']): ?>
                     <img src="<?php echo $record['image_inside']; ?>" class="gallery-img" onclick="openLightbox(this.src)" title="Inside View">
                 <?php endif; ?>
+                <?php if (!empty($record['image_rear'])): ?>
+                    <img src="<?php echo $record['image_rear']; ?>" class="gallery-img" onclick="openLightbox(this.src)" title="Rear View">
+                <?php endif; ?>
             </div>
 
             <?php if ($prize): ?>

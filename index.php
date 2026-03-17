@@ -51,10 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarks= $_POST['remarks'] ?? '';
 
     $upload_dir  = 'uploads/';
-    $image_paths = ['front' => '', 'side' => '', 'inside' => '', 'seller' => ''];
+    $image_paths = ['front' => '', 'side' => '', 'inside' => '', 'rear' => '', 'seller' => ''];
+
 
     $valid = true;
-    foreach (['front', 'side', 'inside', 'seller'] as $key) {
+    foreach (['front', 'side', 'inside', 'rear', 'seller'] as $key) {
+
         if (isset($_FILES['image_' . $key]) && $_FILES['image_' . $key]['error'] === UPLOAD_ERR_OK) {
             $tmp_name  = $_FILES['image_' . $key]['tmp_name'];
             $orig_name = $_FILES['image_' . $key]['name'];
@@ -111,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $is_draft = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
             $final_status = $is_draft ? 'Incomplete' : 'Active';
 
-            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, title, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, remarks, approvals_json, image_front, image_side, image_inside, added_by, address, address2, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO counters (dealer_code, agent_code, seller_code, seller_name, title, nic_type, nic_old, nic_new, joined_year, counter_state, board_comment, opening_hours, seller_image, birthday, sales_method, location_link, province, district, ds_division, gn_division, remarks, approvals_json, image_front, image_side, image_inside, image_rear, added_by, address, address2, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $dealer_code, $agent_code, $seller_code, $seller_name, $_POST['title'] ?? '',
                 $_POST['nic_type'] ?? '', $_POST['nic_old'] ?? '', $_POST['nic_new'] ?? '', 
@@ -123,13 +125,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['province_text'] ?? '', $_POST['district_text'] ?? '', $_POST['ds_division_text'] ?? '', (is_array($_POST['gn_division'] ?? '') ? implode(', ', $_POST['gn_division']) : ($_POST['gn_division'] ?? '')),
                 $remarks,
                 $approvals_json,
-                $image_paths['front'], $image_paths['side'], $image_paths['inside'],
+                $image_paths['front'], $image_paths['side'], $image_paths['inside'], $image_paths['rear'],
                 $_SESSION['username'],
                 $_POST['address'] ?? '',
                 $_POST['address2'] ?? '',
                 $_POST['phone'] ?? '',
                 $final_status
             ]);
+
             $new_counter_id = $pdo->lastInsertId();
             
             // Generate Running Number: AgentCode-Sequence (Excluding Sales Points)
@@ -198,8 +201,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
 
     $edit_id = (int)($_POST['edit_id'] ?? 0);
     // Security: only allow editing own records
-    $check = $pdo->prepare("SELECT id, seller_image, image_front, image_side, image_inside FROM counters WHERE id = ? AND added_by = ?");
+    $check = $pdo->prepare("SELECT id, seller_image, image_front, image_side, image_inside, image_rear FROM counters WHERE id = ? AND added_by = ?");
     $check->execute([$edit_id, $_SESSION['username']]);
+
     $existing = $check->fetch();
 
     if ($existing) {
@@ -209,8 +213,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
             'front'  => $existing['image_front'],
             'side'   => $existing['image_side'],
             'inside' => $existing['image_inside'],
+            'rear'   => $existing['image_rear'],
         ];
-        foreach (['front','side','inside','seller'] as $key) {
+        foreach (['front','side','inside','rear','seller'] as $key) {
+
             if (isset($_FILES['ie_image_'.$key]) && $_FILES['ie_image_'.$key]['error'] === UPLOAD_ERR_OK) {
                 $tmp  = $_FILES['ie_image_'.$key]['tmp_name'];
                 $orig = $_FILES['ie_image_'.$key]['name'];
@@ -231,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 counter_state=?, seller_image=?, birthday=?,
                 sales_method=?, location_link=?,
                 province=?, district=?, ds_division=?, gn_division=?, remarks=?,
-                image_front=?, image_side=?, image_inside=?,
+                image_front=?, image_side=?, image_inside=?, image_rear=?,
                 address=?, address2=?
                 WHERE id=? AND added_by=?");
             $upd->execute([
@@ -243,11 +249,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                 $_POST['ie_sales_method'] ?? '', $_POST['ie_location_link'] ?? '',
                 $_POST['ie_province'] ?? '', $_POST['ie_district'] ?? '', $_POST['ie_ds_division'] ?? '', (is_array($_POST['ie_gn_division'] ?? '') ? implode(', ', $_POST['ie_gn_division']) : ($_POST['ie_gn_division'] ?? '')),
                 $_POST['ie_remarks'] ?? '',
-                $imgs['front'], $imgs['side'], $imgs['inside'],
+                $imgs['front'], $imgs['side'], $imgs['inside'], $imgs['rear'],
                 $_POST['ie_address'] ?? '',
                 $_POST['ie_address2'] ?? '',
                 $edit_id, $_SESSION['username']
             ]);
+
 
             // Update custom fields
             foreach ($custom_fields as $cf) {
@@ -674,7 +681,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
             <div style="margin-bottom:1rem; border-top:1px solid var(--glass-border); padding-top:1rem;">
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">📷 Replace Images (optional — leave empty to keep existing)</p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <?php foreach (['seller'=>'Seller Photo','front'=>'Front View','side'=>'Side View','inside'=>'Inside View'] as $ik=>$il): ?>
+                    <?php foreach (['seller'=>'Seller Photo','front'=>'Front View','side'=>'Side View','inside'=>'Inside View','rear'=>'Rear View'] as $ik=>$il): ?>
+
                     <div class="form-group" style="margin:0;">
                         <label><?php echo $il; ?></label>
                         <input type="file" name="ie_image_<?php echo $ik; ?>" accept="image/*" style="padding:0.4rem; background:rgba(255,255,255,0.05); border:1.5px dashed var(--glass-border); border-radius:10px; width:100%; color:var(--text-main);">
@@ -1072,6 +1080,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                             <span class="upload-status-icon" id="icon_inside">📸</span>
                             <input type="file" id="image_inside" name="image_inside" accept="image/*" required onchange="updateUI('inside')">
                         </div>
+                        <div class="upload-item" onclick="document.getElementById('image_rear').click()">
+                            <div class="upload-info">
+                                <div class="upload-title">Rear view of the counter</div>
+                                <div class="upload-subtitle">(පිටුපස දර්ශනය - click to select)</div>
+                            </div>
+                            <span class="upload-status-icon" id="icon_rear">📸</span>
+                            <input type="file" id="image_rear" name="image_rear" accept="image/*" onchange="updateUI('rear')">
+                        </div>
+
                     </div>
                 </div>
 
@@ -1247,7 +1264,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inline_edit'])) {
                         <div style="text-align:center;"><small>Front</small><img id="thumb_front" style="width: 100%; height: 60px; object-fit: cover; border-radius: 5px; display: none;"></div>
                         <div style="text-align:center;"><small>Side</small><img id="thumb_side" style="width: 100%; height: 60px; object-fit: cover; border-radius: 5px; display: none;"></div>
                         <div style="text-align:center;"><small>Inside</small><img id="thumb_inside" style="width: 100%; height: 60px; object-fit: cover; border-radius: 5px; display: none;"></div>
+                        <div style="text-align:center;"><small>Rear</small><img id="thumb_rear" style="width: 100%; height: 60px; object-fit: cover; border-radius: 5px; display: none;"></div>
                     </div>
+
                 </div>
 
                 <button type="button" class="btn-action btn-pdf" onclick="downloadPDF()">
