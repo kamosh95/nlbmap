@@ -89,7 +89,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    try {
+    // Check for duplicate seller code
+    $check_stmt = $pdo->prepare("SELECT id FROM counters WHERE seller_code = ? AND id != ?");
+    $check_stmt->execute([$seller_code, $record['id']]);
+    if ($check_stmt->fetch()) {
+        $message = "Error: Seller code '<strong>$seller_code</strong>' is already in use by another record. Please use a unique code.";
+        $status = 'error';
+    } else {
+        try {
         // Check if agent or dealer code has changed
         if ($record['agent_code'] !== $agent_code || $record['dealer_code'] !== $dealer_code) {
             $hist_stmt = $pdo->prepare("INSERT INTO transfer_history (counter_id, old_dealer_code, new_dealer_code, old_agent_code, new_agent_code, changed_by) VALUES (?, ?, ?, ?, ?, ?)");
@@ -177,9 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$record['id']]);
         $record = $stmt->fetch();
         
-    } catch (PDOException $e) {
-        $message = "Database error: " . $e->getMessage();
-        $status = 'error';
+        } catch (PDOException $e) {
+            $message = "Database error: " . $e->getMessage();
+            $status = 'error';
+        }
     }
 }
 ?>

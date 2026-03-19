@@ -89,6 +89,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($valid) {
+        // Check for duplicate seller code
+        $check_stmt = $pdo->prepare("SELECT id FROM counters WHERE seller_code = ?");
+        $check_stmt->execute([$seller_code]);
+        if ($check_stmt->fetch()) {
+            $valid = false;
+            $message = "<div style='display:flex; align-items:center; gap:10px;'><span style='font-size:1.5rem;'>⚠️</span> <div><strong>Duplicate Seller Code!</strong><br>A sales point with the code '<strong>$seller_code</strong>' already exists in the system.</div></div>";
+            $status = 'error';
+        }
+    }
+
+    if ($valid) {
         try {
             $is_draft = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
             $final_status = $is_draft ? 'Incomplete' : 'Active';

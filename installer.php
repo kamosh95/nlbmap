@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     PRIMARY KEY (`id`),
                     INDEX idx_dealer (dealer_code),
                     INDEX idx_agent (agent_code),
-                    INDEX idx_seller (seller_code),
+                    UNIQUE INDEX idx_seller (seller_code),
                     INDEX idx_nic (nic_new)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
@@ -268,6 +268,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->exec("ALTER TABLE `counters` ADD COLUMN `image_rear` VARCHAR(255) DEFAULT NULL AFTER `image_inside`;");
                 } catch (Exception $e) {}
 
+                try {
+                    $pdo->exec("ALTER TABLE `counters` ADD UNIQUE INDEX `idx_seller` (`seller_code`);");
+                } catch (Exception $e) {}
+
                 // 9. Seed Default Navigation Links
                 $pdo->exec("INSERT INTO `navigation` (label, url, role_access, nav_group, sort_order)
                     SELECT * FROM (
@@ -291,6 +295,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SELECT 'Import CSV Data 📤',              'import_csv.php',            'admin',           'Main',             14              UNION ALL
                         SELECT 'Contact Us 📞',                  'contact_us.php',            'all',             'Main',             30              UNION ALL
                         SELECT 'Activity Log 📜',                'activity_log.php',          'admin',           'Main',             40              UNION ALL
+                        SELECT 'System Backup 💾',               'backup.php',                'admin',           'Main',             41              UNION ALL
+                        SELECT 'Manage Duplicates 🚨',           'manage_duplicates.php',     'admin',           'Main',             42              UNION ALL
                         SELECT 'Prize Announcements 🏆',         'prize_announcements.php',   'moderator',       'Main',             50              UNION ALL
                         SELECT 'Data Analysis 📊',               'analytics.php',             'tm',              'View Details 📊',  10
                     ) AS tmp

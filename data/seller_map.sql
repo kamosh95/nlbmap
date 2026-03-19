@@ -123,7 +123,7 @@ CREATE TABLE `counters` (
   PRIMARY KEY (`id`),
   KEY `idx_dealer` (`dealer_code`),
   KEY `idx_agent` (`agent_code`),
-  KEY `idx_seller` (`seller_code`),
+  UNIQUE KEY `idx_seller` (`seller_code`),
   KEY `idx_nic` (`nic_new`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -233,7 +233,9 @@ INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sor
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('18', 'Import CSV Data 📤', 'import_csv.php', 'admin', 'Main', '14');
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('19', 'Contact Us 📞', 'contact_us.php', 'all', 'Main', '30');
 INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('20', 'Activity Log 📜', 'activity_log.php', 'admin', 'Main', '40');
-INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('21', 'Prize Announcements 🏆', 'prize_announcements.php', 'admin', 'Main', '50');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('21', 'System Backup 💾', 'backup.php', 'admin', 'Main', '41');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('22', 'Manage Duplicates 🚨', 'manage_duplicates.php', 'admin', 'Main', '42');
+INSERT INTO `navigation` (`id`, `label`, `url`, `role_access`, `nav_group`, `sort_order`) VALUES ('23', 'Prize Announcements 🏆', 'prize_announcements.php', 'moderator', 'Main', '50');
 
 -- Table structure for `password_resets`
 DROP TABLE IF EXISTS `password_resets`;

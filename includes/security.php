@@ -107,24 +107,62 @@ function e($string) {
  * File Upload Security Check
  */
 function is_allowed_file($filename, $tmp_path) {
-    $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!$tmp_path || !file_exists($tmp_path)) return false;
+    
+    $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     
+    // Fallback for files without extensions but appear to be valid images
+    if (empty($ext)) {
+        $info = @getimagesize($tmp_path);
+        if ($info !== false) {
+            $mime_map = [
+                'image/jpeg' => 'jpg',
+                'image/png'  => 'png',
+                'image/gif'  => 'gif',
+                'image/webp' => 'webp'
+            ];
+            $ext = $mime_map[$info['mime']] ?? '';
+        }
+    }
+
     if (!in_array($ext, $allowed_extensions)) {
         return false;
     }
     
     // Check MIME type
+    $mime = '';
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $tmp_path);
         finfo_close($finfo);
-        
-        $allowed_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        return in_array($mime, $allowed_mimes);
+    } 
+    
+    // Fallback to getimagesize for MIME if finfo failed or is missing
+    if (empty($mime) || $mime === 'application/octet-stream') {
+        $info = @getimagesize($tmp_path);
+        if ($info !== false) {
+            $mime = $info['mime'];
+        }
     }
     
-    return true;
+    if (empty($mime)) return false;
+
+    $allowed_mimes = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif', 
+        'image/pjpeg', 'image/x-png', 'image/jpg', 'image/jfif'
+    ];
+    
+    // Special case for HEIC/HEIF which might report as various types
+    if (in_array($ext, ['heic', 'heif'])) {
+        $allowed_mimes[] = 'image/heic';
+        $allowed_mimes[] = 'image/heif';
+        $allowed_mimes[] = 'image/heic-sequence';
+        $allowed_mimes[] = 'image/heif-sequence';
+        $allowed_mimes[] = 'application/octet-stream'; // Often reported for HEIC if no finfo magic
+    }
+
+    return in_array($mime, $allowed_mimes);
 }
 
 /**

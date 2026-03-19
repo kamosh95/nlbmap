@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="si">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLB Seller Map - TM User Manual</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+Sinhala:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0072ff;
+            --secondary: #00d4ff;
+            --dark: #0f172a;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans Sinhala', sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background: #fff;
+            padding-bottom: 50px;
+        }
+
+        /* Cover Page Styling */
+        .cover-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: var(--dark);
+            color: white;
+            padding: 40px;
+            page-break-after: always;
+            border-bottom: 10px solid var(--secondary);
+        }
+
+        .cover-page img {
+            max-width: 180px;
+            margin-bottom: 40px;
+        }
+
+        .cover-page h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cover-page h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 60px;
+        }
+
+        .cover-footer {
+            margin-top: auto;
+            font-size: 1.1rem;
+            opacity: 0.6;
+        }
+
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--secondary);
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+            page-break-inside: avoid;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .description {
+            font-size: 1.05rem;
+            margin-bottom: 20px;
+        }
+
+        .screenshot-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            background: #f1f5f9;
+        }
+
+        .screenshot-wrap img {
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .screenshot-caption {
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            background: white;
+            font-style: italic;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 20px;
+        }
+
+        .step-list li::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+
+            .cover-page {
+                height: 100vh;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .container {
+                width: 100%;
+                max-width: none;
+            }
+
+            .header {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .screenshot-wrap {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+
+        .alert {
+            background: #fffbeb;
+            border-left: 5px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #92400e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- First Page: Cover Page -->
+    <div class="cover-page">
+        <img src="assets/img/Logo.png" alt="NLB Logo">
+        <h1></h1>
+        <h2><b>Seller Details & Map<br>User Manual</b></h2>
+        <div class="cover-footer">
+            NLB Seller Map Portal v2.0 &bull; 2026 Edition<br>
+            Information Technology Division
+        </div>
+    </div>
+
+    <!-- Inner Pages Header (Visible on inner pages, hidden on cover for printing if possible, but easier to just use no-print for the cover if needed, or just let it stay) -->
+    <div class="header no-print">
+        <h1>Seller Details & Map - User Manual</h1>
+    </div>
+
+    <div class="container">
+
+        <div class="section">
+            <h2><span>01</span> නව ගිණුමක් ලියාපදිංචි කිරීම (User Registration / Sign Up)</h2>
+            <div class="description">
+                පද්ධතියට ඇතුළු වීමට ප්‍රථමයෙන් ඔබ සතුව ගිණුමක් නොමැති නම්, පහත පියවර අනුගමනය කර නව ගිණුමක් සාදා ගත හැක.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/screenshot_signup_1773721564086.png"
+                    alt="Registration Page">
+                <div class="screenshot-caption">පියවර 1: ලියාපදිංචි වීමේ පෝරමය (Signup Form)</div>
+            </div>
+            <ul class="step-list">
+                <li data-step="1"><strong>URL:</strong> Browser එකෙහි <code>https://sys.nlb.lk/map/signup.php</code> වෙත
+                    යන්න.</li>
+                <li data-step="2"><strong>System Role:</strong> ඔබ Territory Manager කෙනෙකු නම් <strong>"Field Agent
+                        (TM)"</strong> බොත්තම තෝරන්න.</li>
+                <li data-step="3"><strong>Personal Details:</strong> ඔබගේ සම්පූර්ණ නම, Employee Number, දුරකථන අංකය සහ
+                    නිල විද්‍යුත් තැපෑල (Email) ඇතුළත් කරන්න.</li>
+                <li data-step="4"><strong>Username & Password:</strong> පද්ධතියට ලොග් වීම සඳහා කැමති Username එකක් සහ
+                    ශක්තිමත් Password එකක් ඇතුළත් කරන්න.</li>
+                <li data-step="5"><strong>Submit:</strong> "Submit Registration" බොත්තම ක්ලික් කරන්න.</li>
+            </ul>
+            <div class="alert">
+                <strong>වැදගත්:</strong> ඔබ ලියාපදිංචි වූ පසු, ඔබගේ ගිණුම සක්‍රිය (Activate) කිරීමට පද්ධති පරිපාලක
+                (Admin) විසින් අනුමත කළ යුතුය.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span>02</span> පද්ධතියට ලොග් වීම (Access & Login)</h2>
+            <div class="description">
+                ඔබගේ ගිණුම අනුමත වූ පසු, පද්ධතිය භාවිතා කිරීම සඳහා ලොග් විය යුතුය.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/screenshot_login_1773720628995.png"
+                    alt="Login Page">
+                <div class="screenshot-caption">පියවර 2: පිවිසුම් පිටුව (Login Page)</div>
+            </div>
+            <ul class="step-list">
+                <li data-step="1"><strong>URL:</strong> Browser එකෙහි <code>https://sys.nlb.lk/map/login.php</code> වෙත
+                    යන්න.</li>
+                <li data-step="2"><strong>Username:</strong> ඔබ ලියාපදිංචි වන විට ලබා දුන් නම ඇතුළත් කරන්න.</li>
+                <li data-step="3"><strong>Password:</strong> ඔබගේ රහස් පදය ඇතුළත් කරන්න.</li>
+                <li data-step="4"><strong>Sign In:</strong> නිල් පාට බොත්තම ක්ලික් කර ඇතුළු වන්න.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span>03</span> ප්‍රධාන මෙනුව (TM Dashboard)</h2>
+            <div class="description">
+                ලොග් වූ පසු ඔබට පෙනෙන ප්‍රධාන Dashboard එක. මෙහිදී ඔබට දත්ත ඇතුළත් කිරීමටත් (Data Entry), සෙවීමටත්
+                (Search) හැකියාව පවතී.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/tm_dashboard_1773721267431.png"
+                    alt="Dashboard">
+                <div class="screenshot-caption">පියවර 3: TM Dashboard එක සහ Navigation මෙනුව</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span>04</span> අලෙවිකරුවන් ලියාපදිංචි කිරීම (New Seller Entry)</h2>
+            <div class="description">
+                නව අලෙවිකරුවෙකුගේ තොරතුරු ඇතුළත් කරන ආකාරය.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/tm_entry_1773721248189.png"
+                    alt="Entry Form">
+                <div class="screenshot-caption">පියවර 4: දත්ත ඇතුළත් කිරීමේ පෝරමය</div>
+            </div>
+            <ul class="step-list">
+                <li data-step="1"><strong>Dealer & Agent Codes:</strong> අදාළ අලෙවි නියෝජිත කවුදැයි තෝරන්න.</li>
+                <li data-step="2"><strong>Location Capture:</strong> සත්‍ය GPS පිහිටීම (Maps Link) අනිවාර්යයෙන් ඇතුළත්
+                    කරන්න.</li>
+                <li data-step="3"><strong>Images:</strong> අලෙවිකරුගේ ඡායාරූපය සහ කුටියේ රූප ලබා දෙන්න. (**Rear View**
+                    අනිවාර්ය නොවේ).</li>
+                <li data-step="4"><strong>Submit:</strong> සියලු තොරතුරු පරීක්ෂා කර "Submit" බොත්තම ඔබා අවසන් කරන්න.
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span>05</span> දත්ත සෙවීම සහ Export කිරීම (Data View)</h2>
+            <div class="description">
+                ඇතුළත් කර ඇති අලෙවිකරුවන්ගේ ලැයිස්තුව නැරඹීම සහ Report එකක් Download කරගන්නා ආකාරය.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/tm_view_details_1773721269123.png"
+                    alt="View Details">
+                <div class="screenshot-caption">පියවර 5: Seller List එක Filter කිරීම සහ Export කිරීම</div>
+            </div>
+            <ul class="step-list">
+                <li data-step="1">භාවිතා කරන Search bar එකෙන් නම හෝ කේතය (Code) අනුව සෙවිය හැක.</li>
+                <li data-step="2">පළාත (Province) හෝ දිස්ත්‍රික්කය (District) අනුව Filter කළ හැක.</li>
+                <li data-step="3"><strong>Excel Export:</strong> සියලු දත්ත බාගත කර ගැනීමට "Export" බොත්තම ක්ලික් කරන්න.
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span>06</span> සිතියම් නැරඹීම (Map Visualization)</h2>
+            <div class="description">
+                අලෙවිකරුවන්ගේ පිහිටීම සිතියමක් මත නිරීක්ෂණය කරන ආකාරය.
+            </div>
+            <div class="screenshot-wrap">
+                <img src="file:///C:/Users/kamosh.d/.gemini/antigravity/brain/72736a09-590b-415a-affa-dbba4e0a228d/tm_map_1773721307549.png"
+                    alt="Map View">
+                <div class="screenshot-caption">පියවර 6: Google Map එක මත දත්ත නිරූපණය</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        &copy; 2026 National Lotteries Board - Information Technology Division.<br>
+        This is a system generated manual.
+    </div>
+
+    <!-- Instructions on how to download -->
+    <div class="no-print"
+        style="position:fixed; bottom:20px; right:20px; background:var(--primary); color:white; padding:15px 25px; border-radius:100px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight:bold; cursor:pointer;"
+        onclick="window.print()">
+        🖨️ මනුවල් එක PDF ලෙස ගන්න (Print to PDF)
+    </div>
+
+</body>
+
+</html>
